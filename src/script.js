@@ -94,12 +94,33 @@
   function buildCard(item, mine) {
     const card = document.createElement("div");
     const claim = claims[item.id];
-    card.className = "card" + (item.links.length === 0 ? " big-item" : "") + (claim ? " claimed" : "");
+    card.className = "card" + (item.links.length === 0 ? " big-item" : "") + (claim ? " claimed" : "") + (item.image ? " has-image" : "");
+
+    if (item.image) {
+      const imageWrap = document.createElement("div");
+      imageWrap.className = "card-image-wrap";
+      const img = document.createElement("img");
+      img.className = "card-image";
+      img.src = item.image;
+      img.alt = item.name;
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.addEventListener("error", () => {
+        imageWrap.remove();
+        card.classList.remove("has-image");
+      });
+      imageWrap.appendChild(img);
+      card.appendChild(imageWrap);
+    }
+
+    const body = document.createElement("div");
+    body.className = "card-body";
+    card.appendChild(body);
 
     const name = document.createElement("p");
     name.className = "card-name";
     name.textContent = item.name;
-    card.appendChild(name);
+    body.appendChild(name);
 
     if (item.links.length > 0) {
       const linksWrap = document.createElement("div");
@@ -113,12 +134,12 @@
         a.textContent = l.label;
         linksWrap.appendChild(a);
       });
-      card.appendChild(linksWrap);
+      body.appendChild(linksWrap);
     } else if (!claim) {
       const badge = document.createElement("span");
       badge.className = "big-item-badge";
       badge.textContent = "Ainda sem link — fala com a gente";
-      card.appendChild(badge);
+      body.appendChild(badge);
     }
 
     const claimArea = document.createElement("div");
@@ -180,7 +201,7 @@
       claimArea.appendChild(claimBtn);
     }
 
-    card.appendChild(claimArea);
+    body.appendChild(claimArea);
     return card;
   }
 

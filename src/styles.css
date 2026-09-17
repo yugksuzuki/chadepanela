@@ -301,16 +301,37 @@ main {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 18px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 12px;
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .card:hover {
   box-shadow: 0 8px 22px rgba(53, 60, 30, 0.12);
   transform: translateY(-2px);
+}
+
+.card-image-wrap {
+  aspect-ratio: 1 / 1;
+  background: var(--sage-soft);
+  padding: 14px;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  mix-blend-mode: multiply;
+}
+
+.card-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
 }
 
 .card-name {
@@ -350,6 +371,9 @@ main {
   background: var(--sage-soft);
   border-style: dashed;
   border-color: var(--claimed-border);
+}
+
+.card.big-item .card-body {
   align-items: flex-start;
 }
 
