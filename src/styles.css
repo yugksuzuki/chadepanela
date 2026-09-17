@@ -175,6 +175,55 @@ main {
   font-weight: 500;
 }
 
+.card.claimed {
+  background: #f4f7f2;
+  border-color: #cfe0c8;
+}
+
+.claim-area {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.claim-btn {
+  align-self: flex-start;
+  border: 1px solid var(--accent);
+  background: #fff;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.claim-btn:hover { background: var(--accent); color: #fff; }
+.claim-btn:disabled { opacity: 0.6; cursor: default; }
+
+.claim-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a7a3d;
+}
+
+.claim-undo {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.claim-undo:disabled { opacity: 0.6; cursor: default; }
+
 .footer {
   text-align: center;
   padding: 30px 20px 50px;

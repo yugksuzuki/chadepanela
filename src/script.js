@@ -2,9 +2,162 @@
   const nav = document.getElementById("cat-nav");
   const main = document.getElementById("lista");
 
+  const STORAGE_KEY = "cha-de-panela-minhas-escolhas";
+  let claims = {};
+
+  function getMyClaims() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function rememberMyClaim(itemId) {
+    try {
+      const mine = getMyClaims();
+      mine[itemId] = true;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mine));
+    } catch (e) {
+      /* localStorage indisponível — segue sem lembrar */
+    }
+  }
+
+  function forgetMyClaim(itemId) {
+    try {
+      const mine = getMyClaims();
+      delete mine[itemId];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mine));
+    } catch (e) {
+      /* localStorage indisponível — segue sem lembrar */
+    }
+  }
+
+  async function fetchClaims() {
+    try {
+      const res = await fetch("/api/claims", { cache: "no-store" });
+      if (!res.ok) return {};
+      return await res.json();
+    } catch (e) {
+      return {};
+    }
+  }
+
+  async function claimItem(itemId, name) {
+    const res = await fetch("/api/claims", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId, name }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const err = new Error(data.error || "Não foi possível marcar o item");
+      err.claims = data.claims;
+      throw err;
+    }
+    return data;
+  }
+
+  async function unclaimItem(itemId) {
+    const res = await fetch("/api/claims", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId, action: "unclaim" }),
+    });
+    return res.json();
+  }
+
+  function buildCard(item, mine) {
+    const card = document.createElement("div");
+    const claim = claims[item.id];
+    card.className = "card" + (item.links.length === 0 ? " big-item" : "") + (claim ? " claimed" : "");
+
+    const name = document.createElement("p");
+    name.className = "card-name";
+    name.textContent = item.name;
+    card.appendChild(name);
+
+    if (item.links.length > 0) {
+      const linksWrap = document.createElement("div");
+      linksWrap.className = "card-links";
+      item.links.forEach((l) => {
+        const a = document.createElement("a");
+        a.className = "card-link";
+        a.href = l.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = l.label;
+        linksWrap.appendChild(a);
+      });
+      card.appendChild(linksWrap);
+    } else if (!claim) {
+      const badge = document.createElement("span");
+      badge.className = "big-item-badge";
+      badge.textContent = "Ainda sem link — fala com a gente 💬";
+      card.appendChild(badge);
+    }
+
+    const claimArea = document.createElement("div");
+    claimArea.className = "claim-area";
+
+    if (claim) {
+      const badge = document.createElement("span");
+      badge.className = "claim-badge";
+      badge.textContent = mine
+        ? "Você escolheu este presente 💛"
+        : `Já escolhido por ${claim.name}`;
+      claimArea.appendChild(badge);
+
+      if (mine) {
+        const undoBtn = document.createElement("button");
+        undoBtn.className = "claim-undo";
+        undoBtn.textContent = "Desmarcar";
+        undoBtn.addEventListener("click", async () => {
+          undoBtn.disabled = true;
+          await unclaimItem(item.id);
+          forgetMyClaim(item.id);
+          delete claims[item.id];
+          renderAll();
+        });
+        claimArea.appendChild(undoBtn);
+      }
+    } else {
+      const claimBtn = document.createElement("button");
+      claimBtn.className = "claim-btn";
+      claimBtn.textContent = "Marcar como escolhido";
+      claimBtn.addEventListener("click", async () => {
+        const guestName = window.prompt(
+          "Seu nome, para avisarmos quem já escolheu este presente:"
+        );
+        if (guestName === null) return;
+        if (!guestName.trim()) {
+          window.alert("Por favor, digite seu nome.");
+          return;
+        }
+        claimBtn.disabled = true;
+        claimBtn.textContent = "Marcando...";
+        try {
+          const updated = await claimItem(item.id, guestName);
+          claims = updated;
+          rememberMyClaim(item.id);
+          renderAll();
+        } catch (e) {
+          if (e.claims) claims = e.claims;
+          window.alert(e.message);
+          renderAll();
+        }
+      });
+      claimArea.appendChild(claimBtn);
+    }
+
+    card.appendChild(claimArea);
+    return card;
+  }
+
   function render(filter) {
     main.innerHTML = "";
     const cats = filter === "Todos" ? CATEGORIES : [filter];
+    const mineMap = getMyClaims();
 
     cats.forEach((cat) => {
       const items = ITEMS.filter((i) => i.category === cat);
@@ -22,35 +175,7 @@
       grid.className = "grid";
 
       items.forEach((item) => {
-        const card = document.createElement("div");
-        card.className = "card" + (item.links.length === 0 ? " big-item" : "");
-
-        const name = document.createElement("p");
-        name.className = "card-name";
-        name.textContent = item.name;
-        card.appendChild(name);
-
-        if (item.links.length === 0) {
-          const badge = document.createElement("span");
-          badge.className = "big-item-badge";
-          badge.textContent = "Ainda sem link — fala com a gente 💬";
-          card.appendChild(badge);
-        } else {
-          const linksWrap = document.createElement("div");
-          linksWrap.className = "card-links";
-          item.links.forEach((l) => {
-            const a = document.createElement("a");
-            a.className = "card-link";
-            a.href = l.url;
-            a.target = "_blank";
-            a.rel = "noopener noreferrer";
-            a.textContent = l.label;
-            linksWrap.appendChild(a);
-          });
-          card.appendChild(linksWrap);
-        }
-
-        grid.appendChild(card);
+        grid.appendChild(buildCard(item, !!mineMap[item.id]));
       });
 
       section.appendChild(grid);
@@ -58,7 +183,14 @@
     });
   }
 
+  let activeCategory = "Todos";
+
+  function renderAll() {
+    render(activeCategory);
+  }
+
   function renderNav(active) {
+    activeCategory = active;
     nav.innerHTML = "";
     ["Todos", ...CATEGORIES].forEach((cat) => {
       const btn = document.createElement("button");
@@ -72,6 +204,10 @@
     });
   }
 
-  renderNav("Todos");
-  render("Todos");
+  (async function init() {
+    renderNav("Todos");
+    render("Todos");
+    claims = await fetchClaims();
+    renderAll();
+  })();
 })();
