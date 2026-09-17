@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-17T00:00:00Z",
+  "title": "Design System: Chá de Panela — Paloma & Guilherme",
+  "extensions": {
+    "colorMeta": {
+      "olive": { "role": "primary", "displayName": "Deep Olive", "canonical": "#454e2e", "tonalRamp": ["#1e2213", "#2b3119", "#3b4326", "#454e2e", "#556040", "#6b7548", "#8b9470", "#c3cba6"] },
+      "olive-deep": { "role": "primary", "displayName": "Olive Deep (vignette edge)", "canonical": "#3b4326", "tonalRamp": ["#181c0f", "#242a17", "#2f3620", "#3b4326", "#4d5735", "#6b7548", "#8b9470", "#b7bf9a"] },
+      "olive-mid": { "role": "primary", "displayName": "Olive Mid (line art)", "canonical": "#6b7548", "tonalRamp": ["#2c3120", "#3f462d", "#556040", "#6b7548", "#828c62", "#9aa37e", "#b7bf9a", "#dbe0c8"] },
+      "cream": { "role": "neutral", "displayName": "Cream", "canonical": "#f5efdc", "tonalRamp": ["#3a3626", "#5c5640", "#8f8760", "#c3bd94", "#dcd7ba", "#f5efdc", "#f9f4e8", "#fcf9f2"] },
+      "ivory": { "role": "neutral", "displayName": "Ivory (working surface)", "canonical": "#faf6ec", "tonalRamp": ["#3d3a2c", "#605c46", "#948e6c", "#c8c3a2", "#e2ddc5", "#faf6ec", "#fcf9f2", "#fefdf8"] },
+      "card": { "role": "neutral", "displayName": "Card Surface", "canonical": "#fffdf7", "tonalRamp": ["#403f34", "#635f4d", "#968f70", "#cac4a3", "#e4dfc6", "#fffdf7", "#fffefb", "#ffffff"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#33361f", "tonalRamp": ["#14150c", "#1f2113", "#282a19", "#33361f", "#484c2b", "#63683c", "#868c53", "#b5bc7f"] },
+      "muted": { "role": "neutral", "displayName": "Muted Text", "canonical": "#5c5c42", "tonalRamp": ["#242419", "#38371f27", "#3a3a29", "#5c5c42", "#71715a", "#8b8b73", "#aeae97", "#d6d6c4"] },
+      "border": { "role": "neutral", "displayName": "Hairline Border", "canonical": "#e4e0cb", "tonalRamp": ["#5a5644", "#847e63", "#a8a186", "#c3bda2", "#e4e0cb", "#eeebdd", "#f5f3e9", "#faf9f2"] },
+      "sage": { "role": "secondary", "displayName": "Soft Sage", "canonical": "#8b9470", "tonalRamp": ["#33371f", "#4a5030", "#636b41", "#7c8557", "#8b9470", "#a5ac8b", "#c3cba6", "#e7ead6"] },
+      "sage-soft": { "role": "secondary", "displayName": "Sage Tint", "canonical": "#e7ead6", "tonalRamp": ["#4a5030", "#636b41", "#8b9470", "#a5ac8b", "#c3cba6", "#dce1c6", "#e7ead6", "#f3f5ea"] },
+      "sage-soft-hover": { "role": "secondary", "displayName": "Sage Tint Hover", "canonical": "#dce1c6", "tonalRamp": ["#454b2c", "#5e6540", "#7c8557", "#97a071", "#b3ba90", "#cbd1af", "#dce1c6", "#eef0e2"] },
+      "claimed-bg": { "role": "neutral", "displayName": "Claimed Background", "canonical": "#eef1e1", "tonalRamp": ["#4e563a", "#697254", "#8b9470", "#aab291", "#c3cba6", "#dee2cb", "#eef1e1", "#f7f8f0"] },
+      "claimed-border": { "role": "neutral", "displayName": "Claimed Border", "canonical": "#c3cba6", "tonalRamp": ["#3f4630", "#576046", "#727c5c", "#8e9776", "#aab291", "#c3cba6", "#d7dcc1", "#ecefdf"] },
+      "claimed-text": { "role": "neutral", "displayName": "Claimed Text", "canonical": "#3e5a2a", "tonalRamp": ["#111a0b", "#1e2d13", "#2c421c", "#3e5a2a", "#4f7237", "#6c9450", "#93b674", "#c4d9a9"] }
+    },
+    "typographyMeta": {
+      "display-script": { "displayName": "Hero Script", "purpose": "\"Chá de Panela\" event name, hero only, once per page." },
+      "names-script": { "displayName": "Names Script", "purpose": "\"Paloma & Guilherme\" inside the sage brushstroke highlight; the page's single h1." },
+      "headline": { "displayName": "Category Headline", "purpose": "Category-section titles on the ivory grid." },
+      "body": { "displayName": "Body", "purpose": "Hero welcome message; the only long-form prose on the page." },
+      "label": { "displayName": "UI Label", "purpose": "Shared voice for every interactive control: buttons, chips, pills, badges." }
+    },
+    "shadows": [
+      { "name": "card-hover", "value": "0 8px 22px rgba(53, 60, 30, 0.12)", "purpose": "The system's only shadow: card lift on hover, paired with translateY(-2px), removed at rest." }
+    ],
+    "motion": [
+      { "name": "state-transition", "value": "0.15s ease", "purpose": "Background/border/color transitions on hover for pills, links, buttons, and cards." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "480px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Claim Button (default)",
+      "kind": "button",
+      "refersTo": "claim-btn",
+      "description": "Primary action on an unclaimed item card; inverts fill on hover.",
+      "html": "<button class=\"ds-claim-btn\">Marcar como escolhido</button>",
+      "css": ".ds-claim-btn { display: inline-flex; align-items: center; min-height: 44px; border: 1px solid #454e2e; background: #fffdf7; color: #454e2e; font-family: 'Lora', 'Georgia', serif; font-size: 13px; font-weight: 600; padding: 0 16px; border-radius: 9px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease; } .ds-claim-btn:hover { background: #454e2e; color: #f5efdc; } .ds-claim-btn:focus-visible { outline: 2px solid #454e2e; outline-offset: 2px; } .ds-claim-btn:disabled { opacity: 0.6; cursor: default; }"
+    },
+    {
+      "name": "Category Nav Pill",
+      "kind": "chip",
+      "refersTo": "cat-pill",
+      "description": "Sticky category filter pill; active state fills solid olive.",
+      "html": "<button class=\"ds-cat-pill ds-cat-pill--active\" aria-pressed=\"true\">Todos</button> <button class=\"ds-cat-pill\" aria-pressed=\"false\">Cozinha</button>",
+      "css": ".ds-cat-pill { display: inline-flex; align-items: center; min-height: 44px; border: 1px solid #e4e0cb; background: #fffdf7; color: #33361f; font-family: 'Lora', 'Georgia', serif; padding: 0 18px; border-radius: 999px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease; } .ds-cat-pill:hover { border-color: #454e2e; } .ds-cat-pill--active { background: #454e2e; border-color: #454e2e; color: #f5efdc; } .ds-cat-pill:focus-visible { outline: 2px solid #454e2e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Item Card (default / claimed / big-item)",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Three-state gift card: default (link chips), claimed (olive-family badge state), big-item (dashed, no-link, contact-couple badge).",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-name\">Jogo de panelas</p><div class=\"ds-card-links\"><a class=\"ds-card-link\" href=\"#\">Mercado Livre</a></div><div class=\"ds-claim-area\"><button class=\"ds-claim-btn\">Marcar como escolhido</button></div></div> <div class=\"ds-card ds-card--claimed\"><p class=\"ds-card-name\">Jogo de toalhas</p><div class=\"ds-claim-area\"><span class=\"ds-claim-badge\">Já escolhido por Marina</span></div></div>",
+      "css": ".ds-card { background: #fffdf7; border: 1px solid #e4e0cb; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: box-shadow 0.15s ease, transform 0.15s ease; } .ds-card:hover { box-shadow: 0 8px 22px rgba(53, 60, 30, 0.12); transform: translateY(-2px); } .ds-card-name { font-family: 'Lora', 'Georgia', serif; font-weight: 600; font-size: 15px; margin: 0; color: #33361f; } .ds-card-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; } .ds-card-link { display: inline-flex; align-items: center; min-height: 44px; gap: 6px; background: #e7ead6; color: #3b4326; text-decoration: none; font-family: 'Lora', 'Georgia', serif; font-size: 13px; font-weight: 600; padding: 0 14px; border-radius: 9px; transition: background 0.15s ease; } .ds-card-link:hover { background: #dce1c6; } .ds-card--claimed { background: #eef1e1; border-color: #c3cba6; } .ds-claim-badge { display: inline-flex; align-items: center; gap: 6px; font-family: 'Lora', 'Georgia', serif; font-size: 13px; font-weight: 600; color: #3e5a2a; }"
+    },
+    {
+      "name": "Hero Names (script + brushstroke highlight)",
+      "kind": "custom",
+      "refersTo": "names-script",
+      "description": "The page's single h1: 'Paloma & Guilherme' in Alex Brush, laid over a hand-drawn irregular sage brushstroke mark (inline SVG, not a rectangle).",
+      "html": "<h1 class=\"ds-hero-names\"><span class=\"ds-hero-names-highlight\"><svg class=\"ds-hero-names-mark\" viewBox=\"0 0 420 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><path d=\"M20,52 C15,32 26,16 52,15 C112,4 168,20 226,9 C284,-2 344,12 392,20 C412,26 414,44 404,52 C414,60 410,78 388,82 C330,94 270,78 214,88 C158,98 100,90 56,86 C28,83 12,72 20,52 Z\" fill=\"currentColor\"/></svg><span class=\"ds-hero-names-text\">Paloma <span class=\"ds-amp\">&amp;</span> Guilherme</span></span></h1>",
+      "css": ".ds-hero-names { margin: 0 0 26px; display: flex; justify-content: center; font-weight: 400; } .ds-hero-names-highlight { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 14px 34px 8px; } .ds-hero-names-mark { position: absolute; inset: 0; width: 100%; height: 100%; color: #e7ead6; z-index: -1; } .ds-hero-names-text { position: relative; font-family: 'Alex Brush', cursive; font-size: clamp(1.9rem, 5.5vw, 2.8rem); color: #33361f; } .ds-amp { font-style: italic; }"
+    },
+    {
+      "name": "Heart-Flanked Rule",
+      "kind": "custom",
+      "refersTo": "heart-rule",
+      "description": "The recurring structural-division mark: hairline rules flanking a filled heart glyph. Opens and closes the hero; the heart alone prefixes claim badges and the footer line.",
+      "html": "<div class=\"ds-heart-rule\" aria-hidden=\"true\"><span></span><svg viewBox=\"0 0 24 22\" class=\"ds-icon-heart\"><path d=\"M12 20.2S2 14 2 7.6C2 4.1 4.8 2 7.7 2c1.9 0 3.7 1 4.3 2.9C12.6 3 14.4 2 16.3 2 19.2 2 22 4.1 22 7.6 22 14 12 20.2 12 20.2z\" fill=\"currentColor\"/></svg><span></span></div>",
+      "css": ".ds-heart-rule { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 0 auto 26px; max-width: 280px; } .ds-heart-rule span { flex: 1; height: 1px; background: rgba(245, 239, 220, 0.45); } .ds-icon-heart { width: 15px; height: 14px; color: #f5efdc; flex: none; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Invitation, Continued",
+    "overview": "This registry is not a registry-platform skin dropped onto the couple's item list — it's the second page of an invitation the couple already printed and handed to their guests. Deep olive and warm ivory carry the same chromatic weight as the paper stock and ink of the reference; a script name treatment, a heart-flanked rule, and a hand-drawn corner-bracket frame are transcribed from a real photo of that invitation, not invented from a mood board. The system is quiet and legible everywhere except the hero, where it allows itself the full ornamental voice of the source material once, then recedes into a calm ivory working surface so 60+ repeated item cards stay scannable on a phone. This was a full visual replacement, not an extension: the site's prior Playfair Display + Inter, terracotta/cream system is superseded in its entirety. Every ornament in this build is hand-authored inline SVG line art (heart glyph, olive sprig, kitchen mark, brushstroke highlight) — no rasters ship, because no image-generation tool was available in this session; the source-of-truth for provenance is the authored SVG markup itself, matching the reference's own monoline illustration style.",
+    "keyCharacteristics": [
+      "Deep-olive chrome (hero, sticky nav, footer) bracketing a warm-ivory working grid.",
+      "Script (Alex Brush) reserved exclusively for the couple's names and the event name, at hero scale only — never for UI or body text.",
+      "A repeating heart glyph as the one structural-division mark; no kicker/eyebrow labels anywhere, even though the reference invitation itself uses tracked labels above its headlines (craft-floor ban, held anyway).",
+      "Claimed state leans into the brand's own olive/sage family, not a generic forest green.",
+      "Every mark on the page is hand-authored inline SVG (heart, sprig, kitchen line art, brushstroke) — zero shipping rasters."
+    ],
+    "rules": [
+      { "name": "The One Script Rule", "body": "Alex Brush appears only on \"Chá de Panela\" and \"Paloma & Guilherme,\" both in the hero, both at display scale. It never appears in a button, a badge, a category title, or body copy — the script is a name treatment, not a UI typeface.", "section": "colors" },
+      { "name": "The No-Kicker Rule", "body": "No tracked-caps eyebrow/kicker label sits above either script headline, even though the couple's own printed invitation uses one. The heart-flanked rule performs that structural-division job instead. This is a floor-level prohibition, not a system rule to relax later: kickers are a banned device in this world regardless of source-material precedent.", "section": "colors" },
+      { "name": "The Legible-Over-Decorative Rule", "body": "Any text a guest must read to act (item names, claim controls, category labels, the welcome message) is set in Lora, never in the script or the invitation's original decorative serif — screen legibility for a mixed-age, mobile-first audience outranks matching the reference's every letterform.", "section": "typography" },
+      { "name": "The Hover-Only Shadow Rule", "body": "Shadows exist solely as a state response to card hover; nothing in the system carries a resting shadow, including the hero, nav pills, or buttons.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep Alex Brush confined to the two hero name/event moments at display scale; every other string on the page renders in Lora or Cormorant Garamond.",
+      "Do use the heart glyph (#icon-heart-fill) as the only structural-division device — hero rules, claim badges, progress pill, footer line.",
+      "Do hold every interactive control (claim button, undo link, nav pill, card link) to a 44px minimum tap height regardless of visual size.",
+      "Do keep claimed-state color in the olive/sage family (--claimed-bg / --claimed-border / --claimed-text), never a generic status green or red.",
+      "Do author new ornament as inline SVG line art matching the existing heart/sprig/kitchen-mark stroke weight (~2.2–2.4px, round caps/joins), not as a raster or icon-font glyph."
+    ],
+    "donts": [
+      "Don't add a kicker/eyebrow label above any headline. This holds even though the couple's own printed invitation uses one above its headlines — it is a floor-level ban in this build, not a value to relax because the source material does it.",
+      "Don't introduce a resting shadow on cards, buttons, or the hero. Shadow appears only as a hover response.",
+      "Don't use a symmetric full border on the hero. The corner-bracket-with-one-flourish treatment is deliberate asymmetry transcribed from the reference, not an unfinished border.",
+      "Don't substitute a generic forest/status green for claimed state; it must come from the --claimed-* triad already defined in the palette.",
+      "Don't treat Google Fonts CDN delivery of Alex Brush as fully resolved — see the typography note in DESIGN.md."
+    ]
+  }
+}

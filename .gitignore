@@ -1,0 +1,10 @@
+node_modules/
+.vercel/
+
+# Impeccable skill tooling (machine-local; not part of the site)
+.claude/skills/
+.claude/settings.local.json
+.codex/
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/review/

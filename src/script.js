@@ -6,13 +6,27 @@
   const STORAGE_KEY = "cha-de-panela-minhas-escolhas";
   let claims = {};
 
+  function heartIcon() {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "icon-heart");
+    svg.setAttribute("aria-hidden", "true");
+    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", "#icon-heart-fill");
+    svg.appendChild(use);
+    return svg;
+  }
+
   function updateProgress() {
     if (!progress) return;
+    progress.textContent = "";
     const total = ITEMS.length;
     const chosen = Object.keys(claims).length;
-    progress.textContent = chosen === 0
+    const text = document.createElement("span");
+    text.textContent = chosen === 0
       ? `${total} presentes na lista — nenhum escolhido ainda`
-      : `${chosen} de ${total} presentes já escolhidos 🎁`;
+      : `${chosen} de ${total} presentes já escolhidos`;
+    progress.appendChild(text);
+    if (chosen > 0) progress.appendChild(heartIcon());
   }
 
   function getMyClaims() {
@@ -103,7 +117,7 @@
     } else if (!claim) {
       const badge = document.createElement("span");
       badge.className = "big-item-badge";
-      badge.textContent = "Ainda sem link — fala com a gente 💬";
+      badge.textContent = "Ainda sem link — fala com a gente";
       card.appendChild(badge);
     }
 
@@ -113,9 +127,12 @@
     if (claim) {
       const badge = document.createElement("span");
       badge.className = "claim-badge";
-      badge.textContent = mine
-        ? "Você escolheu este presente 💛"
+      const badgeText = document.createElement("span");
+      badgeText.textContent = mine
+        ? "Você escolheu este presente"
         : `Já escolhido por ${claim.name}`;
+      badge.appendChild(badgeText);
+      badge.appendChild(heartIcon());
       claimArea.appendChild(badge);
 
       if (mine) {

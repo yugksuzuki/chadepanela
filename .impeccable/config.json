@@ -1,0 +1,18 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "src/index.html",
+          "src/styles.css"
+        ],
+        "createdAt": "2026-09-17T18:04:46.384Z",
+        "reason": "Agent: ivory/cream working-surface is drawn from the couple's pinned reference invitation's own palette (its line-art/text color), used deliberately as the Operate-mode scanable surface against a drenched deep-olive chrome (hero/nav/footer) -- see .impeccable/surfaces/src-index-html.md OWN-WORLD block"
+      }
+    ]
+  }
+}
