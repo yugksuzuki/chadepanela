@@ -11,6 +11,11 @@
 
 * { box-sizing: border-box; }
 
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -53,6 +58,17 @@ body {
   font-size: 16px;
   margin: 0 auto;
   max-width: 560px;
+}
+
+.hero-progress {
+  margin: 20px auto 0;
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 8px 16px;
+  border-radius: 999px;
 }
 
 .cat-nav {

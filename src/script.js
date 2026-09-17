@@ -1,9 +1,19 @@
 (function () {
   const nav = document.getElementById("cat-nav");
   const main = document.getElementById("lista");
+  const progress = document.getElementById("hero-progress");
 
   const STORAGE_KEY = "cha-de-panela-minhas-escolhas";
   let claims = {};
+
+  function updateProgress() {
+    if (!progress) return;
+    const total = ITEMS.length;
+    const chosen = Object.keys(claims).length;
+    progress.textContent = chosen === 0
+      ? `${total} presentes na lista — nenhum escolhido ainda`
+      : `${chosen} de ${total} presentes já escolhidos 🎁`;
+  }
 
   function getMyClaims() {
     try {
@@ -117,6 +127,7 @@
           await unclaimItem(item.id);
           forgetMyClaim(item.id);
           delete claims[item.id];
+          updateProgress();
           renderAll();
         });
         claimArea.appendChild(undoBtn);
@@ -140,9 +151,11 @@
           const updated = await claimItem(item.id, guestName);
           claims = updated;
           rememberMyClaim(item.id);
+          updateProgress();
           renderAll();
         } catch (e) {
           if (e.claims) claims = e.claims;
+          updateProgress();
           window.alert(e.message);
           renderAll();
         }
@@ -195,6 +208,7 @@
     ["Todos", ...CATEGORIES].forEach((cat) => {
       const btn = document.createElement("button");
       btn.className = "cat-pill" + (cat === active ? " active" : "");
+      btn.setAttribute("aria-pressed", cat === active ? "true" : "false");
       btn.textContent = cat;
       btn.addEventListener("click", () => {
         renderNav(cat);
@@ -208,6 +222,7 @@
     renderNav("Todos");
     render("Todos");
     claims = await fetchClaims();
+    updateProgress();
     renderAll();
   })();
 })();
