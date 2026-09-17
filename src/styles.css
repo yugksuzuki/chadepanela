@@ -12,6 +12,7 @@
 
   --sage: #8b9470;
   --sage-soft: #e7ead6;
+  --mat: #f0f2e8;
   --sage-soft-hover: #dce1c6;
 
   --claimed-bg: #eef1e1;
@@ -313,8 +314,10 @@ main {
 }
 
 .card-image-wrap {
+  flex: none;
   aspect-ratio: 1 / 1;
-  background: var(--sage-soft);
+  min-height: 0;
+  background: var(--mat);
   padding: 14px;
 }
 
@@ -341,6 +344,24 @@ main {
   margin: 0;
   color: var(--ink);
 }
+
+.card-price {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 17px;
+  margin: -4px 0 0;
+  color: var(--olive-deep);
+  letter-spacing: 0.01em;
+}
+
+.card-price--vazio {
+  font-weight: 500;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.card.claimed .card-price { color: var(--claimed-text); }
 
 .card-links {
   display: flex;
@@ -442,6 +463,116 @@ main {
 
 .claim-undo:disabled { opacity: 0.6; cursor: default; }
 
+/* ---------- Filtros de preço ---------- */
+
+.filtros {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 18px 20px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+
+.filtro-grupo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.filtro-rotulo {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.faixa-pill {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 0 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.faixa-pill:hover { border-color: var(--sage); }
+
+.faixa-pill.active {
+  background: var(--sage-soft);
+  border-color: var(--sage);
+  color: var(--olive-deep);
+  font-weight: 600;
+}
+
+.filtro-select {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.filtro-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.filtro-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--olive);
+  cursor: pointer;
+}
+
+.filtro-nota {
+  flex-basis: 100%;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.resultado {
+  max-width: 960px;
+  margin: 12px auto -14px;
+  padding: 0 20px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.resultado:empty { display: none; }
+
+.vazio {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--muted);
+  text-align: center;
+  padding: 40px 0;
+  margin: 0;
+}
+
 /* ---------- Footer ---------- */
 
 .footer {
@@ -470,7 +601,45 @@ main {
 
 .footer-line .icon-heart { color: var(--claimed-text); }
 
+@media (max-width: 560px) {
+  /* A barra de categorias é sticky. Quebrada em 4 linhas ela ficava com 229px
+     e cobria um quarto da tela do celular o tempo todo — vira uma tira que
+     rola de lado, com as pílulas inteiras. */
+  .cat-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    scroll-snap-type: x proximity;
+    /* sem isso o snap encosta a primeira pílula na borda e come o padding */
+    scroll-padding-inline: 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 10px 16px;
+  }
+
+  .cat-nav::-webkit-scrollbar { display: none; }
+  .cat-pill { scroll-snap-align: start; flex: 0 0 auto; }
+
+  .filtros .filtro-grupo[role="group"] {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    max-width: 100%;
+  }
+
+  .filtros .filtro-grupo[role="group"]::-webkit-scrollbar { display: none; }
+  .faixa-pill { flex: 0 0 auto; }
+
+  .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .card-body { padding: 14px; gap: 10px; }
+  .card-name { font-size: 14px; }
+  .card-price { font-size: 16px; }
+  .card-image-wrap { padding: 10px; }
+}
+
 @media (max-width: 480px) {
+  .filtros { padding: 14px 16px 0; gap: 6px 12px; }
+  .resultado { padding: 0 16px; }
   .hero { padding: 56px 18px 44px; }
   .hero-corner { width: 38px; height: 38px; }
   .hero-sprig { width: 60px; height: 110px; }

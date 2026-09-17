@@ -24,11 +24,11 @@ Shared as a link (e.g. via WhatsApp) before and during the event. Guests claim a
 
 ## Capabilities and Constraints
 
-- Static site (plain HTML/CSS/JS, no build step, no framework), deployed on Vercel.
+- Static site (plain HTML/CSS/JS, no build step, no framework), deployed on Vercel. Deployment Protection must stay off: with it on, every `.vercel.app` domain — production included — gates the list behind a Vercel login, which is fatal for a link shared on WhatsApp.
 - `api/claims.js` is a Vercel serverless function; claims persist in Vercel Blob storage (`claims.json`) via `put`/`list`, read on every request (no caching).
 - No authentication anywhere: any visitor with the link can claim or unclaim any item under any name. This is a **deliberate honor-system trust model** (guests are people the couple knows), not a gap to fix by default.
 - Guest name input is free text, trimmed and capped at 60 characters server-side; no other validation.
-- Items are grouped into fixed categories with a "Todos" (all) filter; most items carry one or more outbound purchase links (Mercado Livre, Shopee); a few large items ("Itens grandes": sofá, mesa com cadeiras, televisão, máquina de lavar louça) intentionally have no link yet, with copy directing guests to contact the couple directly.
+- Items are grouped into fixed categories with a "Todos" (all) filter, plus a price-range filter, a price sort, and a "hide already claimed" toggle — the price controls hide themselves entirely while no item carries a price; most items carry one or more outbound purchase links (Mercado Livre, Shopee); a few large items ("Itens grandes": sofá, mesa com cadeiras, televisão, máquina de lavar louça) intentionally have no link yet, with copy directing guests to contact the couple directly.
 
 ## Brand Commitments
 
@@ -39,7 +39,7 @@ Shared as a link (e.g. via WhatsApp) before and during the event. Guests claim a
 
 ## Evidence on Hand
 
-Real, curated item list with real category groupings and real marketplace purchase links, in `src/items.js`. No product photos, testimonials, or other media currently exist for individual items. The four "itens grandes" have no purchase link by design (not a missing-data gap) — copy explicitly says to talk to the couple directly for those.
+Real, curated item list with real category groupings and real marketplace purchase links, in `src/items.js`. Product photos are scraped from each item's own marketplace listing (`og:image`) by `scripts/atualiza-catalogo.mjs` and stored in `src/assets/products/`; the same script fills `price`/`precoEm`. Prices are therefore real-but-dated, never estimated — an item with no `price` renders "Ver preço no link" rather than a guess. Known gaps at the time of writing: four photos are wrong because the scrape grabbed the wrong listing's image (ferro de passar and porta temperos both show a mop; jarra de suco shows food containers; bows mesa shows wine glasses), and three pairs of items share a single marketplace link, so they necessarily share a photo. The four "itens grandes" have no purchase link by design (not a missing-data gap) — copy explicitly says to talk to the couple directly for those, and they have no photo for the same reason.
 
 ## Product Principles
 
