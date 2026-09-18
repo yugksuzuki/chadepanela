@@ -129,7 +129,43 @@ primeiros envios.
 Sem domínio verificado, o Resend só entrega no e-mail dono da conta. Se um dia
 houver um domínio, é a opção mais limpa.
 
+## Planilha do Google que se preenche sozinha
+
+Cada presente marcado ou desmarcado vira uma linha numa planilha do Google.
+É o caminho mais simples de ser avisado sem senha de app, chave de API ou
+domínio: a única credencial é uma URL.
+
+Planilha já criada: **Chá de Casa Nova — Presentes escolhidos**
+(`10_tyTFweZ3ueuLaMrIscl35hmGgM9BR745VUvLb9Rg4`)
+
+Colunas: quando, o que aconteceu, presente, convidado, total escolhidos, id do
+item.
+
+O passo a passo está no cabeçalho de `scripts/planilha-apps-script.gs`, mas em
+resumo: cola aquele arquivo em script.google.com, publica como aplicativo web
+("Executar como: Eu", "Quem tem acesso: Qualquer pessoa"), e põe a URL `/exec`
+na Vercel:
+
+| Variável | O que é |
+|---|---|
+| `SHEETS_WEBHOOK_URL` | a URL que termina em `/exec` |
+| `SHEETS_WEBHOOK_TOKEN` | opcional, uma palavra secreta; a mesma no `.gs` |
+
+"Qualquer pessoa" assusta, mas é necessário: quem chama é o site, não uma
+pessoa logada. O token existe para o caso de a URL vazar — sem ele, quem
+descobrisse a URL conseguiria escrever linhas na planilha.
+
+### Ser avisado a cada linha nova
+
+Na planilha: **Ferramentas → Regras de notificação → Qualquer alteração →
+Enviar e-mail imediatamente**. Cada pessoa configura a sua, bastando que a
+planilha esteja compartilhada com ela. É o Google mandando o e-mail, então não
+há remetente para verificar nem risco de cair em spam.
+
 ### Como isso se comporta quando dá errado
+
+Os dois canais — e-mail e planilha — são independentes: um fora do ar não
+impede o outro, e nenhum dos dois derruba a escolha do convidado.
 
 Sem nenhuma dessas variáveis, a função registra no log que o aviso está
 desligado e segue normalmente. Se o provedor responder erro, o erro vai para
@@ -144,8 +180,9 @@ texto puro num repositório público vira alvo de robô de spam.
 node scripts/testa-avisos.mjs
 ```
 
-Escolhe o provedor certo, monta o corpo e garante que falha de e-mail não
-derruba a escolha — tudo com dublês, sem mandar e-mail nenhum.
+Escolhe o provedor certo, monta o corpo, monta a linha da planilha e garante
+que falha de aviso não derruba a escolha — tudo com dublês, sem mandar e-mail
+nem escrever em planilha nenhuma.
 
 ## Deploy
 

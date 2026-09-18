@@ -52,20 +52,22 @@ Module._load = function (pedido, ...resto) {
 };
 
 const claims = require("../api/claims.js");
-const { enviaEmail, separaRemetente, destinatarios } = claims;
+const { enviaEmail, notificaPlanilha, separaRemetente, destinatarios } = claims;
 
 /* dublê do fetch */
 let httpEnviado = null;
 const fetchOriginal = globalThis.fetch;
-globalThis.fetch = async (url, init) => {
+const fetchFalso = async (url, init) => {
   httpEnviado = { url, init, corpo: JSON.parse(init.body) };
   return { ok: true, status: 201, text: async () => "" };
 };
+globalThis.fetch = fetchFalso;
 
 function limpaAmbiente() {
   for (const k of [
     "SMTP_USER", "SMTP_PASS", "SMTP_HOST", "SMTP_PORT",
     "BREVO_API_KEY", "RESEND_API_KEY", "CLAIM_EMAIL_FROM", "CLAIM_EMAIL_TO",
+    "SHEETS_WEBHOOK_URL", "SHEETS_WEBHOOK_TOKEN",
   ]) delete process.env[k];
   smtpEnviado = null;
   httpEnviado = null;
@@ -156,13 +158,47 @@ globalThis.fetch = async () => ({ ok: false, status: 401, text: async () => "cha
 let erro = null;
 try { await enviaEmail(AVISO); } catch (e) { erro = e.message; }
 confere("erro do provedor vira exceção", erro, "Brevo 401: chave inválida");
+globalThis.fetch = fetchFalso;
 
-/* ---------- o que mais importa: e-mail quebrado não derruba a escolha ---------- */
+/* ---------- planilha ---------- */
+
+const LINHA = {
+  acao: "Escolhido", itemId: "batedeira", presente: "Batedeira",
+  convidado: "Tia Cida", total: 3, quando: "18/09/2026 18:40",
+};
+
+limpaAmbiente();
+confere("sem URL não tenta escrever", await notificaPlanilha(LINHA), "planilha não configurada");
+
+limpaAmbiente();
+process.env.SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/abc/exec";
+process.env.SHEETS_WEBHOOK_TOKEN = "segredo";
+confere("escreve na planilha", await notificaPlanilha(LINHA), "linha acrescentada na planilha");
+confere("planilha: URL do Apps Script", httpEnviado.url, process.env.SHEETS_WEBHOOK_URL);
+confere("planilha: segue o redirecionamento do Google", httpEnviado.init.redirect, "follow");
+confere("planilha: manda a linha inteira mais o token", httpEnviado.corpo,
+  { ...LINHA, token: "segredo" });
+
+limpaAmbiente();
+process.env.SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/abc/exec";
+await notificaPlanilha(LINHA);
+confere("planilha: token vazio quando não há", httpEnviado.corpo.token, "");
+
+limpaAmbiente();
+process.env.SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/abc/exec";
+globalThis.fetch = async () => ({ ok: false, status: 403, text: async () => "sem permissão" });
+let erroPlanilha = null;
+try { await notificaPlanilha(LINHA); } catch (e) { erroPlanilha = e.message; }
+confere("planilha: erro vira exceção", erroPlanilha, "planilha 403: sem permissão");
+globalThis.fetch = fetchFalso;
+
+/* ---------- o que mais importa: aviso quebrado não derruba a escolha ---------- */
 
 limpaAmbiente();
 process.env.CLAIM_EMAIL_TO = "a@a.com";
 process.env.BREVO_API_KEY = "chave-ruim";
-globalThis.fetch = async () => ({ ok: false, status: 500, text: async () => "provedor fora do ar" });
+process.env.SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/abc/exec";
+globalThis.fetch = async () => ({ ok: false, status: 500, text: async () => "fora do ar" });
 
 const respostas = [];
 const res = {
@@ -176,7 +212,7 @@ console.error = () => {};
 await claims({ method: "POST", body: { itemId: "batedeira", name: "Tia Cida", itemName: "Batedeira" } }, res);
 console.error = erroConsole;
 
-confere("o presente foi gravado mesmo com o e-mail falhando", respostas[0].codigo, 200);
+confere("o presente foi gravado com e-mail E planilha falhando", respostas[0].codigo, 200);
 confere("e ele aparece como escolhido", respostas[0].corpo.batedeira.name, "Tia Cida");
 
 globalThis.fetch = fetchOriginal;
