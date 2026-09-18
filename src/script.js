@@ -5,7 +5,12 @@
   const main = document.getElementById("lista");
   const progress = document.getElementById("hero-progress");
 
+  // A chave continua com o nome antigo de propósito: trocá-la faria todo
+  // convidado perder o "Desmarcar" do que já tinha escolhido.
   const STORAGE_KEY = "cha-de-panela-minhas-escolhas";
+
+  const ENDERECO_ENTREGA =
+    "Av. Marechal Floriano Peixoto, 53 - Socomim - Telêmaco Borba/PR";
   let claims = {};
 
   /* ---------- preço ---------- */
@@ -113,11 +118,11 @@
     }
   }
 
-  async function claimItem(itemId, name) {
+  async function claimItem(itemId, name, itemName) {
     const res = await fetch("/api/claims", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemId, name }),
+      body: JSON.stringify({ itemId, name, itemName }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -128,13 +133,67 @@
     return data;
   }
 
-  async function unclaimItem(itemId) {
+  async function unclaimItem(itemId, itemName) {
     const res = await fetch("/api/claims", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemId, action: "unclaim" }),
+      body: JSON.stringify({ itemId, itemName, action: "unclaim" }),
     });
     return res.json();
+  }
+
+  /* ---------- endereço de entrega ---------- */
+
+  async function copiarEndereco(botao) {
+    const original = botao.textContent;
+    let copiou = false;
+    try {
+      await navigator.clipboard.writeText(ENDERECO_ENTREGA);
+      copiou = true;
+    } catch (e) {
+      // Safari antigo, http sem TLS, permissão negada: cai no seletor de texto,
+      // que pelo menos deixa o convidado copiar com o dedo.
+      const alvo = botao.parentElement.querySelector(".entrega-endereco, .card-entrega-texto");
+      if (alvo && window.getSelection) {
+        const faixa = document.createRange();
+        faixa.selectNodeContents(alvo);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(faixa);
+      }
+    }
+    botao.textContent = copiou ? "Endereço copiado!" : "Selecione e copie";
+    setTimeout(() => { botao.textContent = original; }, 2600);
+  }
+
+  function blocoEntregaDoCard() {
+    const wrap = document.createElement("div");
+    wrap.className = "card-entrega";
+
+    const rotulo = document.createElement("span");
+    rotulo.className = "card-entrega-rotulo";
+    rotulo.textContent = "Enviar para";
+    wrap.appendChild(rotulo);
+
+    const texto = document.createElement("p");
+    texto.className = "card-entrega-texto";
+    texto.textContent = ENDERECO_ENTREGA;
+    wrap.appendChild(texto);
+
+    const botao = document.createElement("button");
+    botao.className = "card-entrega-copiar";
+    botao.type = "button";
+    botao.textContent = "Copiar endereço";
+    botao.addEventListener("click", () => copiarEndereco(botao));
+    wrap.appendChild(botao);
+
+    return wrap;
+  }
+
+  function ligarCopiaDoRodape() {
+    document.querySelectorAll("[data-copiar-endereco]").forEach((botao) => {
+      botao.addEventListener("click", () => copiarEndereco(botao));
+    });
   }
 
   /* ---------- card ---------- */
@@ -214,12 +273,16 @@
       claimArea.appendChild(badge);
 
       if (mine) {
+        // Quem acabou de escolher precisa do endereço agora, não depois de
+        // procurar no rodapé.
+        claimArea.appendChild(blocoEntregaDoCard());
+
         const undoBtn = document.createElement("button");
         undoBtn.className = "claim-undo";
         undoBtn.textContent = "Desmarcar";
         undoBtn.addEventListener("click", async () => {
           undoBtn.disabled = true;
-          await unclaimItem(item.id);
+          await unclaimItem(item.id, item.name);
           forgetMyClaim(item.id);
           delete claims[item.id];
           updateProgress();
@@ -243,7 +306,7 @@
         claimBtn.disabled = true;
         claimBtn.textContent = "Marcando...";
         try {
-          const updated = await claimItem(item.id, guestName);
+          const updated = await claimItem(item.id, guestName, item.name);
           claims = updated;
           rememberMyClaim(item.id);
           updateProgress();
@@ -455,6 +518,7 @@
   }
 
   (async function init() {
+    ligarCopiaDoRodape();
     renderNav();
     renderAll();
     claims = await fetchClaims();

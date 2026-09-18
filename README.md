@@ -1,6 +1,6 @@
-# Chá de Panela — Paloma & Guilherme
+# Chá de Casa Nova — Paloma & Guilherme
 
-Site simples (HTML/CSS/JS puro, sem build) com a lista de presentes do chá de panela.
+Site simples (HTML/CSS/JS puro, sem build) com a lista de presentes do chá de casa nova.
 
 ## Estrutura
 
@@ -63,6 +63,40 @@ Basta abrir `src/index.html` no navegador, ou servir a pasta `src/` com qualquer
 ```bash
 npx serve src
 ```
+
+## Endereço de entrega
+
+O endereço fica em `ENDERECO_ENTREGA`, no topo de `src/script.js`, e aparece em
+dois lugares: na seção "Onde enviar o presente" antes do rodapé, e dentro do
+card assim que o convidado marca o presente como escolhido — que é a hora em
+que ele precisa do endereço. Os dois têm botão de copiar, com seleção de texto
+como plano B onde a área de transferência não está disponível.
+
+Trocar o endereço é trocar essa constante; nada mais depende dela.
+
+## Aviso por e-mail a cada presente escolhido
+
+Quando alguém marca (ou desmarca) um presente, `api/claims.js` manda um e-mail
+avisando. Isso só liga se as três variáveis existirem — em Vercel → Settings →
+Environment Variables, no ambiente Production:
+
+| Variável | O que é |
+|---|---|
+| `RESEND_API_KEY` | chave de uma conta em [resend.com](https://resend.com) |
+| `CLAIM_EMAIL_FROM` | remetente verificado, ex.: `Chá de Casa Nova <avisos@seudominio.com>` |
+| `CLAIM_EMAIL_TO` | destinatários, separados por vírgula |
+
+Os e-mails ficam em variável de ambiente de propósito: endereço de e-mail em
+texto puro num repositório público vira alvo de robô de spam.
+
+Sem as variáveis, a função registra no log que o aviso está desligado e segue
+normalmente — a escolha do convidado é gravada de qualquer jeito. Se o Resend
+responder erro, o erro vai para Vercel → Logs e o convidado não vê nada: a
+escolha dele já está salva, e é isso que importa durante a festa.
+
+No plano grátis do Resend, sem domínio verificado, só dá para enviar para o
+e-mail dono da conta. Para os dois destinatários funcionarem, é preciso
+verificar um domínio no Resend.
 
 ## Deploy
 
