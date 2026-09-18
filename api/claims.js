@@ -40,61 +40,129 @@ function destinatarios() {
     .filter(Boolean);
 }
 
+/** Aceita "Nome <email@dominio>" ou só "email@dominio". */
+function separaRemetente(bruto) {
+  const m = /^\s*(.*?)\s*<\s*([^>]+?)\s*>\s*$/.exec(bruto || "");
+  if (m) return { nome: m[1] || "", email: m[2] };
+  return { nome: "", email: (bruto || "").trim() };
+}
+
+/**
+ * Escolhe o provedor pela variável que estiver configurada, nesta ordem:
+ *
+ *   SMTP_USER + SMTP_PASS   SMTP direto (Gmail com senha de app, por exemplo).
+ *                           Não exige domínio próprio: o remetente é a própria
+ *                           conta, então a mensagem passa pela autenticação do
+ *                           Google e não cai em spam.
+ *   BREVO_API_KEY           Brevo. Verifica um endereço avulso por código de
+ *                           6 dígitos, também sem domínio.
+ *   RESEND_API_KEY          Resend. Precisa de domínio verificado para entregar
+ *                           em endereço que não seja o dono da conta.
+ *
+ * Devolve uma descrição do que aconteceu; nunca lança.
+ */
+async function enviaEmail({ assunto, html, texto }) {
+  const para = destinatarios();
+  if (!para.length) return "sem CLAIM_EMAIL_TO";
+
+  const de = process.env.CLAIM_EMAIL_FROM || process.env.SMTP_USER || "";
+
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    // require aqui dentro: se nodemailer faltar, só este provedor cai,
+    // e a escolha do convidado segue gravada do mesmo jeito.
+    const nodemailer = require("nodemailer");
+    const porta = Number(process.env.SMTP_PORT || 465);
+    const transporte = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: porta,
+      secure: porta === 465,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+    // sem callback: com callback a função serverless pode encerrar antes do envio
+    await transporte.sendMail({
+      from: de || process.env.SMTP_USER,
+      to: para.join(", "),
+      subject: assunto,
+      text: texto,
+      html,
+    });
+    return "enviado por SMTP";
+  }
+
+  if (process.env.BREVO_API_KEY) {
+    const remetente = separaRemetente(de);
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": process.env.BREVO_API_KEY,
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        sender: remetente.nome
+          ? { name: remetente.nome, email: remetente.email }
+          : { email: remetente.email },
+        to: para.map((email) => ({ email })),
+        subject: assunto,
+        htmlContent: html,
+        textContent: texto,
+      }),
+    });
+    if (!res.ok) throw new Error(`Brevo ${res.status}: ${await res.text()}`);
+    return "enviado pela Brevo";
+  }
+
+  if (process.env.RESEND_API_KEY) {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ from: de, to: para, subject: assunto, html, text: texto }),
+    });
+    if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
+    return "enviado pelo Resend";
+  }
+
+  return "nenhum provedor configurado";
+}
+
 /**
  * Avisa o casal que alguém escolheu (ou desmarcou) um presente.
  *
- * Nunca derruba o pedido: se faltar configuração, ou o Resend responder erro,
+ * Nunca derruba o pedido: se faltar configuração, ou o provedor responder erro,
  * a escolha do convidado já foi gravada e é isso que importa. O erro vai para
  * os logs da função (Vercel → Logs) em vez de virar uma tela vermelha na festa.
- *
- * Configuração, em Vercel → Settings → Environment Variables:
- *   RESEND_API_KEY     chave da conta em resend.com
- *   CLAIM_EMAIL_FROM   remetente verificado, ex.: "Chá de Casa Nova <avisos@seudominio.com>"
- *   CLAIM_EMAIL_TO     destinatários separados por vírgula
  */
 async function avisaPorEmail({ acao, itemId, itemName, guestName, total }) {
-  const chave = process.env.RESEND_API_KEY;
-  const de = process.env.CLAIM_EMAIL_FROM;
-  const para = destinatarios();
-
-  if (!chave || !de || !para.length) {
-    console.log("[claims] aviso por e-mail desligado (falta RESEND_API_KEY, CLAIM_EMAIL_FROM ou CLAIM_EMAIL_TO)");
-    return;
-  }
-
   const presente = itemName || itemId;
   const escolheu = acao === "claim";
+
   const assunto = escolheu
     ? `${guestName} escolheu: ${presente}`
     : `${presente} voltou para a lista`;
 
   const quando = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
+  const linha = escolheu
+    ? `${guestName} escolheu ${presente}.`
+    : `${presente} foi desmarcado e está disponível de novo.`;
+
   const corpo = escolheu
     ? `<p><strong>${escapaHtml(guestName)}</strong> escolheu <strong>${escapaHtml(presente)}</strong>.</p>`
     : `<p><strong>${escapaHtml(presente)}</strong> foi desmarcado e está disponível de novo.</p>`;
 
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${chave}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: de,
-        to: para,
-        subject: assunto,
-        html:
-          corpo +
-          `<p style="color:#5c5c42">${escapaHtml(String(total))} presente(s) escolhido(s) até agora.<br>` +
-          `${escapaHtml(quando)}</p>`,
-      }),
+    const resultado = await enviaEmail({
+      assunto,
+      html:
+        corpo +
+        `<p style="color:#5c5c42">${escapaHtml(String(total))} presente(s) escolhido(s) até agora.<br>` +
+        `${escapaHtml(quando)}</p>`,
+      texto: `${linha}\n\n${total} presente(s) escolhido(s) até agora.\n${quando}`,
     });
-
-    if (!res.ok) {
-      console.error(`[claims] Resend respondeu ${res.status}: ${await res.text()}`);
-    }
+    console.log(`[claims] aviso: ${resultado}`);
   } catch (e) {
     console.error("[claims] falha ao enviar o aviso por e-mail:", e);
   }
@@ -163,3 +231,8 @@ module.exports = async (req, res) => {
   res.setHeader("Allow", "GET, POST");
   return res.status(405).json({ error: "Método não permitido" });
 };
+
+// Exportado só para scripts/testa-avisos.mjs. A função continua sendo o handler.
+module.exports.enviaEmail = enviaEmail;
+module.exports.separaRemetente = separaRemetente;
+module.exports.destinatarios = destinatarios;
