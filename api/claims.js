@@ -129,6 +129,33 @@ async function enviaEmail({ assunto, html, texto }) {
 }
 
 /**
+ * Acrescenta uma linha na planilha do Google.
+ *
+ * Do outro lado é um Apps Script publicado como aplicativo web — o código está
+ * em scripts/planilha-apps-script.gs. Não envolve senha de app, chave de API
+ * nem OAuth: a única credencial é a própria URL, guardada em
+ * SHEETS_WEBHOOK_URL, mais um token opcional em SHEETS_WEBHOOK_TOKEN para o
+ * caso de a URL vazar.
+ *
+ * Um aplicativo web do Apps Script responde com um 302 para
+ * script.googleusercontent.com; o fetch segue o redirecionamento sozinho.
+ */
+async function notificaPlanilha(dados) {
+  const url = process.env.SHEETS_WEBHOOK_URL;
+  if (!url) return "planilha não configurada";
+
+  const res = await fetch(url, {
+    method: "POST",
+    redirect: "follow",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...dados, token: process.env.SHEETS_WEBHOOK_TOKEN || "" }),
+  });
+
+  if (!res.ok) throw new Error(`planilha ${res.status}: ${await res.text()}`);
+  return "linha acrescentada na planilha";
+}
+
+/**
  * Avisa o casal que alguém escolheu (ou desmarcou) um presente.
  *
  * Nunca derruba o pedido: se faltar configuração, ou o provedor responder erro,
@@ -165,6 +192,22 @@ async function avisaPorEmail({ acao, itemId, itemName, guestName, total }) {
     console.log(`[claims] aviso: ${resultado}`);
   } catch (e) {
     console.error("[claims] falha ao enviar o aviso por e-mail:", e);
+  }
+
+  // Canal separado, falha separada: planilha fora do ar não impede o e-mail,
+  // e vice-versa. Nenhum dos dois pode derrubar a escolha do convidado.
+  try {
+    const resultado = await notificaPlanilha({
+      acao: escolheu ? "Escolhido" : "Desmarcado",
+      itemId,
+      presente,
+      convidado: guestName || "",
+      total,
+      quando,
+    });
+    console.log(`[claims] planilha: ${resultado}`);
+  } catch (e) {
+    console.error("[claims] falha ao escrever na planilha:", e);
   }
 }
 
@@ -234,5 +277,6 @@ module.exports = async (req, res) => {
 
 // Exportado só para scripts/testa-avisos.mjs. A função continua sendo o handler.
 module.exports.enviaEmail = enviaEmail;
+module.exports.notificaPlanilha = notificaPlanilha;
 module.exports.separaRemetente = separaRemetente;
 module.exports.destinatarios = destinatarios;
