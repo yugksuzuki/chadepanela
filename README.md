@@ -77,26 +77,75 @@ Trocar o endereço é trocar essa constante; nada mais depende dela.
 ## Aviso por e-mail a cada presente escolhido
 
 Quando alguém marca (ou desmarca) um presente, `api/claims.js` manda um e-mail
-avisando. Isso só liga se as três variáveis existirem — em Vercel → Settings →
-Environment Variables, no ambiente Production:
+avisando quem escolheu o quê. O provedor é escolhido pela variável que estiver
+configurada, nesta ordem — basta configurar **um** deles.
+
+Todas as variáveis vão em Vercel → Settings → Environment Variables, no
+ambiente Production. Depois de salvar, é preciso um novo deploy para a função
+enxergar as variáveis.
+
+Comum aos três:
 
 | Variável | O que é |
 |---|---|
-| `RESEND_API_KEY` | chave de uma conta em [resend.com](https://resend.com) |
-| `CLAIM_EMAIL_FROM` | remetente verificado, ex.: `Chá de Casa Nova <avisos@seudominio.com>` |
 | `CLAIM_EMAIL_TO` | destinatários, separados por vírgula |
+| `CLAIM_EMAIL_FROM` | remetente, `Nome <email>` ou só o e-mail |
+
+### 1. SMTP direto — não precisa de domínio nem de cadastro
+
+| Variável | O que é |
+|---|---|
+| `SMTP_USER` | o e-mail que envia, ex.: uma conta do Gmail |
+| `SMTP_PASS` | senha de app dessa conta (não a senha normal) |
+| `SMTP_HOST` | opcional, padrão `smtp.gmail.com` |
+| `SMTP_PORT` | opcional, padrão `465` |
+
+No Gmail: ative a verificação em duas etapas e gere uma **senha de app** em
+myaccount.google.com/apppasswords. `CLAIM_EMAIL_FROM` pode ficar de fora — aí
+o remetente é o próprio `SMTP_USER`.
+
+É a rota mais confiável sem domínio: a mensagem sai autenticada pelo Google,
+com o remetente sendo de fato aquela conta, então não cai em spam. A Vercel
+bloqueia a porta 25 mas deixa 465 e 587 abertas, que é o que isto usa.
+
+### 2. Brevo — sem domínio, mas com cadastro
+
+| Variável | O que é |
+|---|---|
+| `BREVO_API_KEY` | chave de uma conta em brevo.com |
+
+A Brevo verifica um endereço avulso por código de 6 dígitos, sem exigir
+domínio. Grátis até 300 e-mails por dia. Dois poréns: conta nova passa por uma
+aprovação manual antes de liberar envio, e como o remetente é um endereço de
+webmail sem autenticação de domínio, vale conferir a caixa de spam nos
+primeiros envios.
+
+### 3. Resend — só com domínio próprio
+
+| Variável | O que é |
+|---|---|
+| `RESEND_API_KEY` | chave de uma conta em resend.com |
+
+Sem domínio verificado, o Resend só entrega no e-mail dono da conta. Se um dia
+houver um domínio, é a opção mais limpa.
+
+### Como isso se comporta quando dá errado
+
+Sem nenhuma dessas variáveis, a função registra no log que o aviso está
+desligado e segue normalmente. Se o provedor responder erro, o erro vai para
+Vercel → Logs e o convidado não vê nada: a escolha dele já foi gravada antes de
+o e-mail ser tentado, e é isso que importa durante a festa. Há teste cobrindo
+exatamente esse caso.
 
 Os e-mails ficam em variável de ambiente de propósito: endereço de e-mail em
 texto puro num repositório público vira alvo de robô de spam.
 
-Sem as variáveis, a função registra no log que o aviso está desligado e segue
-normalmente — a escolha do convidado é gravada de qualquer jeito. Se o Resend
-responder erro, o erro vai para Vercel → Logs e o convidado não vê nada: a
-escolha dele já está salva, e é isso que importa durante a festa.
+```bash
+node scripts/testa-avisos.mjs
+```
 
-No plano grátis do Resend, sem domínio verificado, só dá para enviar para o
-e-mail dono da conta. Para os dois destinatários funcionarem, é preciso
-verificar um domínio no Resend.
+Escolhe o provedor certo, monta o corpo e garante que falha de e-mail não
+derruba a escolha — tudo com dublês, sem mandar e-mail nenhum.
 
 ## Deploy
 
