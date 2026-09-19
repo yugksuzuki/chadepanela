@@ -173,6 +173,42 @@ async function enviaEmail({ assunto, html, texto, campos }) {
 }
 
 /**
+ * Registra o evento numa tabela do Supabase.
+ *
+ * A chave em SUPABASE_KEY é uma publishable/anon, e a política de RLS da
+ * tabela só permite INSERT: se ela vazar, o pior que acontece é alguém sujar a
+ * lista com linhas falsas — não dá para ler quem escolheu o quê, nem apagar,
+ * nem alterar. O casal lê pelo painel do Supabase, que entra como dono.
+ */
+async function registraNoSupabase(dados) {
+  const url = process.env.SUPABASE_URL;
+  const chave = process.env.SUPABASE_KEY;
+  if (!url || !chave) return "Supabase não configurado";
+
+  const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/escolhas`, {
+    method: "POST",
+    headers: {
+      apikey: chave,
+      Authorization: `Bearer ${chave}`,
+      "Content-Type": "application/json",
+      // sem "return=representation": a política não dá SELECT, então pedir o
+      // registro de volta faria o insert falhar mesmo tendo gravado
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify({
+      acao: dados.acao,
+      presente: dados.presente,
+      item_id: dados.itemId,
+      convidado: dados.convidado || null,
+      total: dados.total,
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
+  return "registrado no Supabase";
+}
+
+/**
  * Acrescenta uma linha na planilha do Google.
  *
  * Do outro lado é um Apps Script publicado como aplicativo web — o código está
@@ -245,17 +281,27 @@ async function avisaPorEmail({ acao, itemId, itemName, guestName, total }) {
     console.error("[claims] falha ao enviar o aviso por e-mail:", e);
   }
 
-  // Canal separado, falha separada: planilha fora do ar não impede o e-mail,
-  // e vice-versa. Nenhum dos dois pode derrubar a escolha do convidado.
+  // Canais separados, falhas separadas: um fora do ar não impede os outros, e
+  // nenhum deles pode derrubar a escolha do convidado.
+  // "linha" acima já é a versão em texto do aviso; este é o evento em si.
+  const evento = {
+    acao: escolheu ? "Escolhido" : "Desmarcado",
+    itemId,
+    presente,
+    convidado: guestName || "",
+    total,
+    quando,
+  };
+
   try {
-    const resultado = await notificaPlanilha({
-      acao: escolheu ? "Escolhido" : "Desmarcado",
-      itemId,
-      presente,
-      convidado: guestName || "",
-      total,
-      quando,
-    });
+    const resultado = await registraNoSupabase(evento);
+    console.log(`[claims] supabase: ${resultado}`);
+  } catch (e) {
+    console.error("[claims] falha ao registrar no Supabase:", e);
+  }
+
+  try {
+    const resultado = await notificaPlanilha(evento);
     console.log(`[claims] planilha: ${resultado}`);
   } catch (e) {
     console.error("[claims] falha ao escrever na planilha:", e);
@@ -329,5 +375,6 @@ module.exports = async (req, res) => {
 // Exportado só para scripts/testa-avisos.mjs. A função continua sendo o handler.
 module.exports.enviaEmail = enviaEmail;
 module.exports.notificaPlanilha = notificaPlanilha;
+module.exports.registraNoSupabase = registraNoSupabase;
 module.exports.separaRemetente = separaRemetente;
 module.exports.destinatarios = destinatarios;

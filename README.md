@@ -146,6 +146,39 @@ primeiros envios.
 Sem domínio verificado, o Resend só entrega no e-mail dono da conta. Se um dia
 houver um domínio, é a opção mais limpa.
 
+## Supabase: o registro de quem escolheu o quê
+
+Cada presente marcado ou desmarcado vira uma linha na tabela `public.escolhas`
+do projeto Supabase **cha-de-casa-nova** (`pjcuruezxmukopwzqxks`). É o canal
+principal de registro, e já está configurado — nada a fazer.
+
+| Coluna | O que guarda |
+|---|---|
+| `quando` | data e hora do evento |
+| `acao` | `Escolhido` ou `Desmarcado` |
+| `presente` | nome do presente |
+| `item_id` | o id dele em `items.js` |
+| `convidado` | o nome digitado (nulo quando é desmarcação) |
+| `total` | quantos presentes estavam escolhidos naquele momento |
+
+Uma linha por evento, nunca sobrescrita: o histórico é o ponto, dá para ver
+quem desmarcou o quê e quando.
+
+| Variável | Valor |
+|---|---|
+| `SUPABASE_URL` | a URL do projeto |
+| `SUPABASE_KEY` | a chave publishable |
+
+**A chave só pode inserir.** A tabela está com RLS ligada e uma única política,
+de `INSERT`. Se a chave vazar, o pior que acontece é alguém sujar a lista com
+linhas falsas — não dá para ler quem escolheu o quê, nem apagar, nem alterar.
+A leitura é pelo painel do Supabase, que entra como dono e passa por cima do
+RLS.
+
+Vale lembrar o que isto **não** faz: o Supabase não manda e-mail sozinho. Ele é
+o registro; para ser avisado no celular ou no e-mail, use um dos provedores de
+e-mail acima ou as regras de notificação da planilha.
+
 ## Planilha do Google que se preenche sozinha
 
 Cada presente marcado ou desmarcado vira uma linha numa planilha do Google.
