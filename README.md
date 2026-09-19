@@ -84,14 +84,31 @@ Todas as variáveis vão em Vercel → Settings → Environment Variables, no
 ambiente Production. Depois de salvar, é preciso um novo deploy para a função
 enxergar as variáveis.
 
-Comum aos três:
+Comum aos provedores que enviam por conta própria (todos menos o Web3Forms,
+que descobre o destino pela chave):
 
 | Variável | O que é |
 |---|---|
 | `CLAIM_EMAIL_TO` | destinatários, separados por vírgula |
 | `CLAIM_EMAIL_FROM` | remetente, `Nome <email>` ou só o e-mail |
 
-### 1. SMTP direto — não precisa de domínio nem de cadastro
+### 1. Web3Forms — o de menor atrito
+
+| Variável | O que é |
+|---|---|
+| `WEB3FORMS_KEYS` | uma chave por destinatário, separadas por vírgula |
+
+Em [web3forms.com](https://web3forms.com) você digita o e-mail e a chave chega
+nele. Não há tela de permissão do Google, senha de app, domínio nem conta com
+senha. No plano grátis cada chave entrega num endereço só e o limite é 250
+envios por mês — a lista tem 63 presentes, então sobra.
+
+Como cada chave atende um endereço, dois destinatários são duas chaves, e o
+código faz uma requisição para cada. Uma chave com problema não cala a outra:
+só vira erro se todas falharem. `CLAIM_EMAIL_TO` e `CLAIM_EMAIL_FROM` não são
+usados por este provedor — quem define o destino é a própria chave.
+
+### 2. SMTP direto — não precisa de domínio nem de cadastro
 
 | Variável | O que é |
 |---|---|
@@ -108,7 +125,7 @@ o remetente é o próprio `SMTP_USER`.
 com o remetente sendo de fato aquela conta, então não cai em spam. A Vercel
 bloqueia a porta 25 mas deixa 465 e 587 abertas, que é o que isto usa.
 
-### 2. Brevo — sem domínio, mas com cadastro
+### 3. Brevo — sem domínio, mas com cadastro
 
 | Variável | O que é |
 |---|---|
@@ -120,7 +137,7 @@ aprovação manual antes de liberar envio, e como o remetente é um endereço de
 webmail sem autenticação de domínio, vale conferir a caixa de spam nos
 primeiros envios.
 
-### 3. Resend — só com domínio próprio
+### 4. Resend — só com domínio próprio
 
 | Variável | O que é |
 |---|---|

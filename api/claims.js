@@ -50,6 +50,12 @@ function separaRemetente(bruto) {
 /**
  * Escolhe o provedor pela variável que estiver configurada, nesta ordem:
  *
+ *   WEB3FORMS_KEYS          Web3Forms. É o de menor atrito: nenhuma tela de
+ *                           permissão, nenhuma senha de app, nenhum domínio —
+ *                           a chave chega por e-mail depois de digitar o
+ *                           endereço em web3forms.com. Uma chave por
+ *                           destinatário, separadas por vírgula, porque no
+ *                           plano grátis cada chave manda para um endereço só.
  *   SMTP_USER + SMTP_PASS   SMTP direto (Gmail com senha de app, por exemplo).
  *                           Não exige domínio próprio: o remetente é a própria
  *                           conta, então a mensagem passa pela autenticação do
@@ -61,11 +67,49 @@ function separaRemetente(bruto) {
  *
  * Devolve uma descrição do que aconteceu; nunca lança.
  */
-async function enviaEmail({ assunto, html, texto }) {
+async function enviaEmail({ assunto, html, texto, campos }) {
   const para = destinatarios();
   if (!para.length) return "sem CLAIM_EMAIL_TO";
 
   const de = process.env.CLAIM_EMAIL_FROM || process.env.SMTP_USER || "";
+
+  const chavesWeb3 = (process.env.WEB3FORMS_KEYS || "")
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean);
+
+  if (chavesWeb3.length) {
+    // Uma requisição por chave: no plano grátis cada chave entrega num
+    // endereço só, então dois destinatários são duas chaves.
+    const falhas = [];
+    for (const chave of chavesWeb3) {
+      try {
+        const res = await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({
+            access_key: chave,
+            subject: assunto,
+            // campos livres: o Web3Forms repassa no corpo do e-mail como vierem
+            Presente: campos.presente,
+            Convidado: campos.convidado || "—",
+            "O que aconteceu": campos.acao,
+            "Total escolhidos": String(campos.total),
+            Quando: campos.quando,
+          }),
+        });
+        if (!res.ok) falhas.push(`${res.status}: ${await res.text()}`);
+      } catch (e) {
+        falhas.push(String(e));
+      }
+    }
+    // Uma chave que falha não invalida a outra: o importante é alguém ser avisado.
+    if (falhas.length === chavesWeb3.length) {
+      throw new Error(`Web3Forms falhou em todas as chaves — ${falhas.join(" | ")}`);
+    }
+    const ok = chavesWeb3.length - falhas.length;
+    return `enviado pelo Web3Forms (${ok} de ${chavesWeb3.length})`;
+  }
 
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     // require aqui dentro: se nodemailer faltar, só este provedor cai,
@@ -183,6 +227,13 @@ async function avisaPorEmail({ acao, itemId, itemName, guestName, total }) {
   try {
     const resultado = await enviaEmail({
       assunto,
+      campos: {
+        acao: escolheu ? "Escolhido" : "Desmarcado",
+        presente,
+        convidado: guestName || "",
+        total,
+        quando,
+      },
       html:
         corpo +
         `<p style="color:#5c5c42">${escapaHtml(String(total))} presente(s) escolhido(s) até agora.<br>` +

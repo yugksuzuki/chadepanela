@@ -67,13 +67,20 @@ function limpaAmbiente() {
   for (const k of [
     "SMTP_USER", "SMTP_PASS", "SMTP_HOST", "SMTP_PORT",
     "BREVO_API_KEY", "RESEND_API_KEY", "CLAIM_EMAIL_FROM", "CLAIM_EMAIL_TO",
+    "WEB3FORMS_KEYS",
     "SHEETS_WEBHOOK_URL", "SHEETS_WEBHOOK_TOKEN",
   ]) delete process.env[k];
   smtpEnviado = null;
   httpEnviado = null;
 }
 
-const AVISO = { assunto: "Tia Cida escolheu: Batedeira", html: "<p>oi</p>", texto: "oi" };
+const CAMPOS = {
+  acao: "Escolhido", presente: "Batedeira", convidado: "Tia Cida",
+  total: 3, quando: "19/09/2026 10:15",
+};
+const AVISO = {
+  assunto: "Tia Cida escolheu: Batedeira", html: "<p>oi</p>", texto: "oi", campos: CAMPOS,
+};
 
 /* ---------- remetente ---------- */
 
@@ -97,6 +104,60 @@ limpaAmbiente();
 process.env.CLAIM_EMAIL_TO = "a@a.com";
 confere("sem provedor não tenta enviar", await enviaEmail(AVISO), "nenhum provedor configurado");
 
+/* ---------- Web3Forms: o de menor atrito, vem antes de todos ---------- */
+
+// guarda cada requisição, porque uma chave por destinatário vira várias
+let httpTodos = [];
+const fetchGravaTudo = async (url, init) => {
+  httpEnviado = { url, init, corpo: JSON.parse(init.body) };
+  httpTodos.push(httpEnviado);
+  return { ok: true, status: 200, text: async () => "" };
+};
+
+limpaAmbiente();
+httpTodos = [];
+globalThis.fetch = fetchGravaTudo;
+process.env.CLAIM_EMAIL_TO = "g@hotmail.com";
+process.env.WEB3FORMS_KEYS = "chave-do-gui, chave-da-paloma";
+process.env.SMTP_USER = "u";
+process.env.SMTP_PASS = "p";
+process.env.BREVO_API_KEY = "brevo";
+confere("Web3Forms vence todos", await enviaEmail(AVISO), "enviado pelo Web3Forms (2 de 2)");
+confere("uma requisição por chave", httpTodos.length, 2);
+confere("Web3Forms: endpoint", httpTodos[0].url, "https://api.web3forms.com/submit");
+confere("Web3Forms: chaves separadas e limpas",
+  httpTodos.map((r) => r.corpo.access_key), ["chave-do-gui", "chave-da-paloma"]);
+confere("Web3Forms: campos legíveis no e-mail",
+  [httpTodos[0].corpo.Presente, httpTodos[0].corpo.Convidado, httpTodos[0].corpo["Total escolhidos"]],
+  ["Batedeira", "Tia Cida", "3"]);
+confere("Web3Forms: não chamou SMTP", smtpEnviado, null);
+
+// uma chave falhando não pode calar a outra
+limpaAmbiente();
+httpTodos = [];
+process.env.CLAIM_EMAIL_TO = "g@hotmail.com";
+process.env.WEB3FORMS_KEYS = "ruim,boa";
+let chamada = 0;
+globalThis.fetch = async (url, init) => {
+  chamada++;
+  httpTodos.push({ url, init, corpo: JSON.parse(init.body) });
+  return chamada === 1
+    ? { ok: false, status: 401, text: async () => "chave invalida" }
+    : { ok: true, status: 200, text: async () => "" };
+};
+confere("uma chave ruim não cala a boa", await enviaEmail(AVISO), "enviado pelo Web3Forms (1 de 2)");
+confere("tentou as duas mesmo assim", httpTodos.length, 2);
+
+// todas falhando aí sim é erro
+limpaAmbiente();
+process.env.CLAIM_EMAIL_TO = "g@hotmail.com";
+process.env.WEB3FORMS_KEYS = "ruim1,ruim2";
+globalThis.fetch = async () => ({ ok: false, status: 401, text: async () => "chave invalida" });
+let erroWeb3 = null;
+try { await enviaEmail(AVISO); } catch (e) { erroWeb3 = e.message.slice(0, 44); }
+confere("todas falhando vira exceção", erroWeb3, "Web3Forms falhou em todas as chaves — 401: c");
+globalThis.fetch = fetchFalso;
+
 /* ---------- SMTP tem prioridade ---------- */
 
 limpaAmbiente();
@@ -105,7 +166,7 @@ process.env.SMTP_USER = "p@gmail.com";
 process.env.SMTP_PASS = "senha-de-app";
 process.env.BREVO_API_KEY = "brevo";
 process.env.RESEND_API_KEY = "resend";
-confere("SMTP vence os outros", await enviaEmail(AVISO), "enviado por SMTP");
+confere("SMTP vence Brevo e Resend", await enviaEmail(AVISO), "enviado por SMTP");
 confere("SMTP: host padrão do Gmail", smtpEnviado.config.host, "smtp.gmail.com");
 confere("SMTP: 465 é seguro", [smtpEnviado.config.port, smtpEnviado.config.secure], [465, true]);
 confere("SMTP: remetente cai no próprio usuário", smtpEnviado.msg.from, "p@gmail.com");
