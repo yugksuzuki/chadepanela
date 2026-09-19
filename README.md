@@ -297,3 +297,22 @@ Site estático sem framework. O `vercel.json` aponta `outputDirectory` para `src
 `.vercel.app` do projeto pede login da Vercel — inclusive o de produção — e o
 convidado que abrir o link do WhatsApp bate numa tela de login em vez da lista.
 Confira em Vercel → Settings → Deployment Protection antes de mandar o link.
+
+### Branch de produção
+
+Todo push para o branch padrão do repositório gera deploy, mas com
+`target: null` — ou seja, preview. O domínio
+`cha-de-panela-paloma-guilherme.vercel.app` continua no deploy anterior até
+alguém promover o novo na mão. Isso acontece porque o **Production Branch** do
+projeto na Vercel aponta para um branch diferente do branch padrão daqui.
+
+Enquanto os dois não coincidirem, publicar exige duas etapas: o merge e a
+promoção. Para resolver de vez, basta que o Production Branch da Vercel e o
+default branch do GitHub tenham o mesmo nome:
+
+- Vercel: https://vercel.com/yugksuzukis-projects/cha-de-panela-paloma-guilherme/settings/environments/production
+- GitHub: https://github.com/yugksuzuki/chadepanela/settings (campo *Default branch*)
+
+A API da Vercel expõe esse campo em `link.productionBranch`, no `PATCH
+/v9/projects/{id}` — mas só com um token de conta, que o conector MCP não
+carrega. Por isso o ajuste é manual.
