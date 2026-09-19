@@ -118,12 +118,34 @@
     }
   }
 
+  /**
+   * Falha de rede no meio da festa é esperada: celular no 4G do interior,
+   * wi-fi lotado, o site sendo republicado. O fetch só lança nesses casos —
+   * resposta de erro do servidor chega com res.ok falso e passa direto por
+   * aqui. Então uma segunda tentativa costuma resolver, e quando não resolve
+   * o convidado ouve português em vez de "Failed to fetch".
+   */
+  async function postClaims(corpo) {
+    for (let tentativa = 1; ; tentativa++) {
+      try {
+        return await fetch("/api/claims", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(corpo),
+        });
+      } catch (e) {
+        if (tentativa >= 2) {
+          throw new Error(
+            "Não conseguimos falar com o site. Confira sua internet e tente de novo."
+          );
+        }
+        await new Promise((r) => setTimeout(r, 800));
+      }
+    }
+  }
+
   async function claimItem(itemId, name, itemName) {
-    const res = await fetch("/api/claims", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemId, name, itemName }),
-    });
+    const res = await postClaims({ itemId, name, itemName });
     const data = await res.json();
     if (!res.ok) {
       const err = new Error(data.error || "Não foi possível marcar o item");
@@ -134,11 +156,7 @@
   }
 
   async function unclaimItem(itemId, itemName) {
-    const res = await fetch("/api/claims", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemId, itemName, action: "unclaim" }),
-    });
+    const res = await postClaims({ itemId, itemName, action: "unclaim" });
     return res.json();
   }
 
@@ -282,7 +300,15 @@
         undoBtn.textContent = "Desmarcar";
         undoBtn.addEventListener("click", async () => {
           undoBtn.disabled = true;
-          await unclaimItem(item.id, item.name);
+          try {
+            await unclaimItem(item.id, item.name);
+          } catch (e) {
+            // Sem isto o botão ficava desabilitado para sempre e o erro
+            // sumia no console, com o convidado achando que desmarcou.
+            undoBtn.disabled = false;
+            window.alert(e.message);
+            return;
+          }
           forgetMyClaim(item.id);
           delete claims[item.id];
           updateProgress();
