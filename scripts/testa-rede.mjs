@@ -74,7 +74,7 @@ async function abre(aoReceberPost, opcoes = {}) {
     else estado[corpo.itemId] = { name: corpo.name, claimedAt: new Date().toISOString() };
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(estado) });
   });
-  await p.goto(URL, { waitUntil: "networkidle" });
+  await p.goto(URL + (opcoes.query || ""), { waitUntil: "networkidle" });
   await p.waitForTimeout(1000);
   return { ctx, p, contaPosts: () => posts, avisos };
 }
@@ -210,6 +210,57 @@ async function abre(aoReceberPost, opcoes = {}) {
     await p.locator(".card.claimed").count() > 0, true);
   confere("Web3Forms fora do ar: o convidado não vê erro", alertas, []);
   await ctx.close();
+}
+
+/* 7. presente escolhido por outra pessoa: preso para o convidado, livre no modo casal */
+
+{
+  // marca num navegador...
+  const um = await abre(() => "ok");
+  um.p.on("dialog", async (d) => {
+    if (d.type() === "prompt") return d.accept("Tia Cida");
+    await d.accept();
+  });
+  await um.p.locator("button.claim-btn").first().click();
+  await um.p.waitForTimeout(1500);
+  const marcado = await um.p.locator(".card.claimed .card-name").first().textContent();
+  await um.ctx.close();
+
+  // ...e abre noutro, sem o localStorage de quem marcou
+  const estadoAlheio = {};
+  async function comClaimAlheio(query) {
+    const ctx = await nav.newContext({ viewport: { width: 390, height: 844 } });
+    const p = await ctx.newPage();
+    await ctx.route("**/api/config", (r) =>
+      r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ web3forms: [] }) }));
+    await ctx.route("**/api/claims", (r) =>
+      r.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ mixer: { name: "Tia Cida", claimedAt: new Date().toISOString() } }),
+      }));
+    await p.goto(URL + query, { waitUntil: "networkidle" });
+    await p.waitForTimeout(1200);
+    return { ctx, p };
+  }
+
+  const normal = await comClaimAlheio("");
+  confere("presente de outra pessoa aparece como escolhido",
+    await normal.p.locator(".card.claimed").count(), 1);
+  confere("sem ?casal, ninguém consegue desmarcar",
+    await normal.p.locator("button.claim-undo").count(), 0);
+  confere("e o endereço não aparece no card dos outros",
+    await normal.p.locator(".card-entrega").count(), 0);
+  await normal.ctx.close();
+
+  const casal = await comClaimAlheio("?casal");
+  confere("com ?casal, dá para desmarcar o presente de qualquer um",
+    await casal.p.locator("button.claim-undo").count(), 1);
+  confere("modo casal não mostra o endereço de entrega",
+    await casal.p.locator(".card-entrega").count(), 0);
+  confere("modo casal preserva o nome de quem escolheu",
+    /Já escolhido por Tia Cida/.test(await casal.p.locator(".claim-badge").first().textContent()), true);
+  await casal.ctx.close();
 }
 
 await nav.close();
