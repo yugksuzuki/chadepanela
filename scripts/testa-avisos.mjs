@@ -115,6 +115,26 @@ const fetchGravaTudo = async (url, init) => {
   return { ok: true, status: 200, text: async () => "" };
 };
 
+// Este é o caso real: o Web3Forms é o único provedor que não usa
+// CLAIM_EMAIL_TO, porque a chave já diz para quem entregar. Exigir a
+// variável aqui desligava justamente ele — foi o que aconteceu em produção,
+// e passou batido porque o teste abaixo definia CLAIM_EMAIL_TO sem precisar.
+limpaAmbiente();
+httpTodos = [];
+globalThis.fetch = fetchGravaTudo;
+process.env.WEB3FORMS_KEYS = "chave-sozinha";
+confere("Web3Forms funciona sem CLAIM_EMAIL_TO",
+  await enviaEmail(AVISO), "enviado pelo Web3Forms (1 de 1)");
+confere("Web3Forms sem CLAIM_EMAIL_TO: a requisição saiu", httpTodos.length, 1);
+
+// e o contrário continua valendo: sem Web3Forms, quem envia precisa do destino
+limpaAmbiente();
+process.env.SMTP_USER = "u";
+process.env.SMTP_PASS = "p";
+confere("os outros provedores seguem exigindo CLAIM_EMAIL_TO",
+  await enviaEmail(AVISO), "sem CLAIM_EMAIL_TO");
+confere("e nem tentam enviar", smtpEnviado, null);
+
 limpaAmbiente();
 httpTodos = [];
 globalThis.fetch = fetchGravaTudo;
