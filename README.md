@@ -123,7 +123,7 @@ Supabase, que é o registro que vale.
 `CLAIM_EMAIL_TO` e `CLAIM_EMAIL_FROM` não participam: a chave já define o
 destinatário.
 
-### 2. SMTP direto### 2. SMTP direto — não precisa de domínio nem de cadastro
+### 2. SMTP direto — não precisa de domínio nem de cadastro
 
 | Variável | O que é |
 |---|---|
@@ -300,19 +300,25 @@ Confira em Vercel → Settings → Deployment Protection antes de mandar o link.
 
 ### Branch de produção
 
-Todo push para o branch padrão do repositório gera deploy, mas com
-`target: null` — ou seja, preview. O domínio
-`cha-de-panela-paloma-guilherme.vercel.app` continua no deploy anterior até
-alguém promover o novo na mão. Isso acontece porque o **Production Branch** do
-projeto na Vercel aponta para um branch diferente do branch padrão daqui.
+O Production Branch do projeto na Vercel é `main`. Todo push para `main` vira
+deploy com `target: production` e assume o domínio
+`cha-de-panela-paloma-guilherme.vercel.app` sozinho, sem promoção manual.
+**Merge sempre em `main`.**
 
-Enquanto os dois não coincidirem, publicar exige duas etapas: o merge e a
-promoção. Para resolver de vez, basta que o Production Branch da Vercel e o
-default branch do GitHub tenham o mesmo nome:
+Por um tempo não foi assim, e vale registrar o porquê. O default branch do
+repositório era `claude/migrate-vercel-github-g15lpn`; push nele gerava deploy,
+mas com `target: null` — preview. O domínio de produção continuava no deploy
+anterior até alguém promover o novo na mão, e foi isso que obrigou uma etapa
+manual depois de cada merge.
+
+Se um dia o deploy voltar a não subir sozinho, é o mesmo desencontro: o nome do
+branch nos dois lugares abaixo precisa bater.
 
 - Vercel: https://vercel.com/yugksuzukis-projects/cha-de-panela-paloma-guilherme/settings/environments/production
 - GitHub: https://github.com/yugksuzuki/chadepanela/settings (campo *Default branch*)
 
-A API da Vercel expõe esse campo em `link.productionBranch`, no `PATCH
-/v9/projects/{id}` — mas só com um token de conta, que o conector MCP não
-carrega. Por isso o ajuste é manual.
+O campo da Vercel é `link.productionBranch`, em `PATCH /v9/projects/{id}`, e só
+aceita token de conta — o conector MCP não carrega um, nem devolve o valor numa
+leitura. Por isso a descoberta foi empírica: criar o branch, dar um push de
+verdade e olhar o `target` do deploy que nasceu. Push de um commit já deployado
+não serve: a Vercel deduplica e não constrói nada.
