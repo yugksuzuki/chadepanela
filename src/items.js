@@ -73,8 +73,8 @@ const ITEMS = [
   { id: "mop", name: "Mop", category: "Casa e lavanderia", image: "assets/products/mop.webp", price: 101.36, precoEm: "2026-09-17", links: [{ label: "Ver produto", url: "https://meli.la/23azDKb" }] },
   { id: "lixeiras", name: "Lixeiras", category: "Casa e lavanderia", image: "assets/products/lixeiras.jpg", links: [{ label: "Ver produto", url: "https://s.shopee.com.br/9V1YPJYARH" }] },
 
-  { id: "jogo-de-toalhas", name: "Jogo de toalhas", category: "Cama e banho", price: 154.63, precoEm: "2026-09-18", links: [{ label: "Ver produto", url: "https://www.mercadolivre.com.br/jogo-toalha-banho-e-rosto-4pcs-100-algodao-520g-atlantica/up/MLBU4593843372?pdp_filters=item_id%3AMLB7330517578" }] },
-  { id: "jogo-de-lencol-king", name: "Jogo de lençol king", category: "Cama e banho", price: 159.99, precoEm: "2026-09-18", links: [{ label: "Ver produto", url: "https://www.mercadolivre.com.br/jogo-lencol-king-4-pecas-600-fios-verde-oliva-moderno-luxo/up/MLBU3933575290?pdp_filters=item_id%3AMLB4639854293" }] },
+  { id: "jogo-de-toalhas", name: "Jogo de toalhas", category: "Cama e banho", image: "assets/products/jogo-de-toalhas.svg", price: 154.63, precoEm: "2026-09-18", links: [{ label: "Ver produto", url: "https://www.mercadolivre.com.br/jogo-toalha-banho-e-rosto-4pcs-100-algodao-520g-atlantica/up/MLBU4593843372?pdp_filters=item_id%3AMLB7330517578" }] },
+  { id: "jogo-de-lencol-king", name: "Jogo de lençol king", category: "Cama e banho", image: "assets/products/jogo-de-lencol-king.svg", price: 159.99, precoEm: "2026-09-18", links: [{ label: "Ver produto", url: "https://www.mercadolivre.com.br/jogo-lencol-king-4-pecas-600-fios-verde-oliva-moderno-luxo/up/MLBU3933575290?pdp_filters=item_id%3AMLB4639854293" }] },
 
   { id: "jogo-de-panelas", name: "Jogo de panelas", category: "Panelas", image: "assets/products/jogo-de-panelas.webp", price: 388.30, precoEm: "2026-09-17", links: [{ label: "Opção 1", url: "https://meli.la/2LCpWFQ" }, { label: "Opção 2", url: "https://meli.la/32nfYJd" }] },
 

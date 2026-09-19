@@ -303,7 +303,10 @@
     body.appendChild(name);
 
     const valor = preco(item);
-    if (TEM_PRECOS) {
+    // Sem preço e sem link não há para onde mandar ninguém: "Ver preço no link"
+    // ficaria logo acima do selo que diz justamente que link não há. Nos itens
+    // grandes o selo já explica sozinho.
+    if (TEM_PRECOS && (valor !== null || item.links.length > 0)) {
       const linha = document.createElement("p");
       linha.className = "card-price" + (valor === null ? " card-price--vazio" : "");
       linha.textContent = valor === null ? "Ver preço no link" : dinheiro.format(valor);

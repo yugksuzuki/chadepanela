@@ -8,3 +8,6 @@ node_modules/
 .impeccable/config.local.json
 .impeccable/hook.cache.json
 .impeccable/review/
+
+# Saída do verifica.mjs (skill lp-visual): screenshots de auditoria, não do site
+verificacao/
