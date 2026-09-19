@@ -68,15 +68,15 @@ function separaRemetente(bruto) {
  * Devolve uma descrição do que aconteceu; nunca lança.
  */
 async function enviaEmail({ assunto, html, texto, campos }) {
-  const para = destinatarios();
-  if (!para.length) return "sem CLAIM_EMAIL_TO";
-
-  const de = process.env.CLAIM_EMAIL_FROM || process.env.SMTP_USER || "";
-
+  // O Web3Forms vem antes da exigência de CLAIM_EMAIL_TO de propósito: nele
+  // quem define o destinatário é a própria chave, então pedir CLAIM_EMAIL_TO
+  // aqui desligaria o único provedor que não precisa dele.
   const chavesWeb3 = (process.env.WEB3FORMS_KEYS || "")
     .split(",")
     .map((c) => c.trim())
     .filter(Boolean);
+
+  const de = process.env.CLAIM_EMAIL_FROM || process.env.SMTP_USER || "";
 
   if (chavesWeb3.length) {
     // Uma requisição por chave: no plano grátis cada chave entrega num
@@ -110,6 +110,11 @@ async function enviaEmail({ assunto, html, texto, campos }) {
     const ok = chavesWeb3.length - falhas.length;
     return `enviado pelo Web3Forms (${ok} de ${chavesWeb3.length})`;
   }
+
+  // Daqui para baixo, todo provedor manda por conta própria e precisa saber
+  // para quem.
+  const para = destinatarios();
+  if (!para.length) return "sem CLAIM_EMAIL_TO";
 
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     // require aqui dentro: se nodemailer faltar, só este provedor cai,
