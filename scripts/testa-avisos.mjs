@@ -52,7 +52,7 @@ Module._load = function (pedido, ...resto) {
 };
 
 const claims = require("../api/claims.js");
-const { enviaEmail, notificaPlanilha, separaRemetente, destinatarios } = claims;
+const { enviaEmail, notificaPlanilha, registraNoSupabase, separaRemetente, destinatarios } = claims;
 
 /* dublê do fetch */
 let httpEnviado = null;
@@ -69,6 +69,7 @@ function limpaAmbiente() {
     "BREVO_API_KEY", "RESEND_API_KEY", "CLAIM_EMAIL_FROM", "CLAIM_EMAIL_TO",
     "WEB3FORMS_KEYS",
     "SHEETS_WEBHOOK_URL", "SHEETS_WEBHOOK_TOKEN",
+    "SUPABASE_URL", "SUPABASE_KEY",
   ]) delete process.env[k];
   smtpEnviado = null;
   httpEnviado = null;
@@ -221,6 +222,53 @@ try { await enviaEmail(AVISO); } catch (e) { erro = e.message; }
 confere("erro do provedor vira exceção", erro, "Brevo 401: chave inválida");
 globalThis.fetch = fetchFalso;
 
+/* ---------- Supabase ---------- */
+
+const EVENTO = {
+  acao: "Escolhido", itemId: "batedeira", presente: "Batedeira",
+  convidado: "Tia Cida", total: 3, quando: "19/09/2026 10:15",
+};
+
+limpaAmbiente();
+confere("sem SUPABASE_URL não tenta gravar", await registraNoSupabase(EVENTO), "Supabase não configurado");
+
+limpaAmbiente();
+process.env.SUPABASE_URL = "https://pjcuruezxmukopwzqxks.supabase.co";
+process.env.SUPABASE_KEY = "sb_publishable_teste";
+confere("grava no Supabase", await registraNoSupabase(EVENTO), "registrado no Supabase");
+confere("Supabase: endpoint da tabela", httpEnviado.url,
+  "https://pjcuruezxmukopwzqxks.supabase.co/rest/v1/escolhas");
+confere("Supabase: a chave vai nos dois cabeçalhos",
+  [httpEnviado.init.headers.apikey, httpEnviado.init.headers.Authorization],
+  ["sb_publishable_teste", "Bearer sb_publishable_teste"]);
+confere("Supabase: não pede o registro de volta (a política não dá SELECT)",
+  httpEnviado.init.headers.Prefer, "return=minimal");
+confere("Supabase: colunas da tabela", httpEnviado.corpo,
+  { acao: "Escolhido", presente: "Batedeira", item_id: "batedeira", convidado: "Tia Cida", total: 3 });
+
+// URL com barra no fim não pode virar caminho duplo
+limpaAmbiente();
+process.env.SUPABASE_URL = "https://x.supabase.co/";
+process.env.SUPABASE_KEY = "k";
+await registraNoSupabase(EVENTO);
+confere("barra sobrando na URL é aparada", httpEnviado.url, "https://x.supabase.co/rest/v1/escolhas");
+
+// desmarcar não tem convidado: a coluna aceita nulo
+limpaAmbiente();
+process.env.SUPABASE_URL = "https://x.supabase.co";
+process.env.SUPABASE_KEY = "k";
+await registraNoSupabase({ ...EVENTO, acao: "Desmarcado", convidado: "" });
+confere("sem convidado grava nulo, não string vazia", httpEnviado.corpo.convidado, null);
+
+limpaAmbiente();
+process.env.SUPABASE_URL = "https://x.supabase.co";
+process.env.SUPABASE_KEY = "k";
+globalThis.fetch = async () => ({ ok: false, status: 401, text: async () => "chave invalida" });
+let erroSupa = null;
+try { await registraNoSupabase(EVENTO); } catch (e) { erroSupa = e.message; }
+confere("Supabase: erro vira exceção", erroSupa, "Supabase 401: chave invalida");
+globalThis.fetch = fetchFalso;
+
 /* ---------- planilha ---------- */
 
 const LINHA = {
@@ -259,6 +307,8 @@ limpaAmbiente();
 process.env.CLAIM_EMAIL_TO = "a@a.com";
 process.env.BREVO_API_KEY = "chave-ruim";
 process.env.SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/abc/exec";
+process.env.SUPABASE_URL = "https://x.supabase.co";
+process.env.SUPABASE_KEY = "k";
 globalThis.fetch = async () => ({ ok: false, status: 500, text: async () => "fora do ar" });
 
 const respostas = [];
@@ -273,7 +323,7 @@ console.error = () => {};
 await claims({ method: "POST", body: { itemId: "batedeira", name: "Tia Cida", itemName: "Batedeira" } }, res);
 console.error = erroConsole;
 
-confere("o presente foi gravado com e-mail E planilha falhando", respostas[0].codigo, 200);
+confere("presente gravado com e-mail, planilha E Supabase falhando", respostas[0].codigo, 200);
 confere("e ele aparece como escolhido", respostas[0].corpo.batedeira.name, "Tia Cida");
 
 globalThis.fetch = fetchOriginal;
