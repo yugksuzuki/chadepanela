@@ -35,11 +35,33 @@ function confere(nome, obtido, esperado) {
 }
 
 /** Abre a página com o /api/claims sob controle nosso. */
-async function abre(aoReceberPost) {
+async function abre(aoReceberPost, opcoes = {}) {
   const ctx = await nav.newContext({ viewport: { width: 390, height: 844 } });
   const p = await ctx.newPage();
   let estado = {};
   let posts = 0;
+  const avisos = [];
+
+  // /api/config entrega as chaves do Web3Forms ao navegador
+  await ctx.route("**/api/config", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ web3forms: opcoes.chaves ?? ["chave-de-teste"] }),
+    })
+  );
+
+  // o Web3Forms de verdade fica atrás do Cloudflare; aqui é um dublê
+  await ctx.route("https://api.web3forms.com/**", async (route) => {
+    avisos.push(JSON.parse(route.request().postData() || "{}"));
+    if (opcoes.web3formsCai) return route.abort("connectionfailed");
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true }),
+    });
+  });
+
   await ctx.route("**/api/claims", async (route) => {
     if (route.request().method() === "GET") {
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(estado) });
@@ -54,7 +76,7 @@ async function abre(aoReceberPost) {
   });
   await p.goto(URL, { waitUntil: "networkidle" });
   await p.waitForTimeout(1000);
-  return { ctx, p, contaPosts: () => posts };
+  return { ctx, p, contaPosts: () => posts, avisos };
 }
 
 /* 1. a rede cai uma vez: a segunda tentativa salva, sem o convidado ver nada */
@@ -127,6 +149,66 @@ async function abre(aoReceberPost) {
     await p.locator("button.claim-undo").first().isEnabled(), true);
   confere("desmarcar falhando: continua marcado, sem mentir para o convidado",
     await p.locator(".card.claimed").count() > 0, true);
+  await ctx.close();
+}
+
+/* 4. o aviso ao casal sai do navegador, com os campos certos */
+
+{
+  const { ctx, p, avisos } = await abre(() => "ok");
+  p.on("dialog", async (d) => {
+    if (d.type() === "prompt") return d.accept("Tia Cida");
+    await d.accept();
+  });
+  await p.locator("button.claim-btn").first().click();
+  await p.waitForTimeout(2000);
+
+  confere("marcar dispara um aviso", avisos.length, 1);
+  confere("aviso: manda a chave vinda de /api/config", avisos[0]?.access_key, "chave-de-teste");
+  confere("aviso: assunto diz quem escolheu o quê",
+    /^Tia Cida escolheu: .+/.test(avisos[0]?.subject || ""), true);
+  confere("aviso: campos legíveis no corpo",
+    [avisos[0]?.Convidado, avisos[0]?.["O que aconteceu"], avisos[0]?.["Total escolhidos"]],
+    ["Tia Cida", "Escolhido", "1"]);
+
+  await p.locator("button.claim-undo").first().click();
+  await p.waitForTimeout(2000);
+  confere("desmarcar também avisa", avisos.length, 2);
+  confere("aviso de desmarcação", avisos[1]?.["O que aconteceu"], "Desmarcado");
+  await ctx.close();
+}
+
+/* 5. uma chave por destinatário vira um aviso por chave */
+
+{
+  const { ctx, p, avisos } = await abre(() => "ok", { chaves: ["chave-gui", "chave-paloma"] });
+  p.on("dialog", async (d) => {
+    if (d.type() === "prompt") return d.accept("Tia Cida");
+    await d.accept();
+  });
+  await p.locator("button.claim-btn").first().click();
+  await p.waitForTimeout(2000);
+  confere("duas chaves, dois avisos", avisos.map((a) => a.access_key),
+    ["chave-gui", "chave-paloma"]);
+  await ctx.close();
+}
+
+/* 6. o aviso falhando não pode atrapalhar o convidado */
+
+{
+  const alertas = [];
+  const { ctx, p } = await abre(() => "ok", { web3formsCai: true });
+  p.on("dialog", async (d) => {
+    if (d.type() === "prompt") return d.accept("Tia Cida");
+    alertas.push(d.message());
+    await d.accept();
+  });
+  await p.locator("button.claim-btn").first().click();
+  await p.waitForTimeout(2500);
+
+  confere("Web3Forms fora do ar: o presente fica marcado",
+    await p.locator(".card.claimed").count() > 0, true);
+  confere("Web3Forms fora do ar: o convidado não vê erro", alertas, []);
   await ctx.close();
 }
 

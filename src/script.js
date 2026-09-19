@@ -11,6 +11,13 @@
 
   const ENDERECO_ENTREGA =
     "Av. Marechal Floriano Peixoto, 53 - Socomim - Telêmaco Borba/PR";
+
+  // Chaves do Web3Forms, buscadas em /api/config. O aviso ao casal sai daqui,
+  // do navegador, e não do servidor: o Web3Forms fica atrás do Cloudflare, que
+  // responde a chamada vinda de um data center com um desafio de JavaScript.
+  // Do navegador é o uso para o qual ele foi feito — e é por isso que a chave
+  // deles é pública por definição.
+  let chavesDeAviso = [];
   let claims = {};
 
   /* ---------- preço ---------- */
@@ -160,6 +167,46 @@
     return res.json();
   }
 
+  /* ---------- aviso ao casal ---------- */
+
+  async function carregaChavesDeAviso() {
+    try {
+      const res = await fetch("/api/config", { cache: "no-store" });
+      if (!res.ok) return;
+      const dados = await res.json();
+      if (Array.isArray(dados.web3forms)) chavesDeAviso = dados.web3forms;
+    } catch (e) {
+      // Sem aviso o convidado não perde nada: a escolha dele já está no
+      // Supabase, que é o registro que vale.
+    }
+  }
+
+  /**
+   * Avisa o casal por e-mail. Roda depois de a escolha já estar gravada, e
+   * sem await de propósito: se o Web3Forms estiver fora do ar ou bloqueado
+   * por uma extensão, o convidado não pode nem perceber.
+   */
+  function avisaOCasal(evento) {
+    for (const chave of chavesDeAviso) {
+      fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          access_key: chave,
+          subject:
+            evento.acao === "Escolhido"
+              ? `${evento.convidado} escolheu: ${evento.presente}`
+              : `${evento.presente} voltou para a lista`,
+          Presente: evento.presente,
+          Convidado: evento.convidado || "—",
+          "O que aconteceu": evento.acao,
+          "Total escolhidos": String(evento.total),
+          Quando: new Date().toLocaleString("pt-BR"),
+        }),
+      }).catch(() => {});
+    }
+  }
+
   /* ---------- endereço de entrega ---------- */
 
   async function copiarEndereco(botao) {
@@ -302,6 +349,12 @@
           undoBtn.disabled = true;
           try {
             await unclaimItem(item.id, item.name);
+            avisaOCasal({
+              acao: "Desmarcado",
+              presente: item.name,
+              convidado: "",
+              total: Object.keys(claims).length - 1,
+            });
           } catch (e) {
             // Sem isto o botão ficava desabilitado para sempre e o erro
             // sumia no console, com o convidado achando que desmarcou.
@@ -334,6 +387,12 @@
         try {
           const updated = await claimItem(item.id, guestName, item.name);
           claims = updated;
+          avisaOCasal({
+            acao: "Escolhido",
+            presente: item.name,
+            convidado: guestName.trim(),
+            total: Object.keys(claims).length,
+          });
           rememberMyClaim(item.id);
           updateProgress();
           renderAll();
@@ -544,6 +603,7 @@
   }
 
   (async function init() {
+    carregaChavesDeAviso();
     ligarCopiaDoRodape();
     renderNav();
     renderAll();

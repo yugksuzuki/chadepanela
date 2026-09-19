@@ -92,7 +92,7 @@ que descobre o destino pela chave):
 | `CLAIM_EMAIL_TO` | destinatários, separados por vírgula |
 | `CLAIM_EMAIL_FROM` | remetente, `Nome <email>` ou só o e-mail |
 
-### 1. Web3Forms — o de menor atrito
+### 1. Web3Forms — o de menor atrito, e sai do navegador
 
 | Variável | O que é |
 |---|---|
@@ -103,12 +103,27 @@ nele. Não há tela de permissão do Google, senha de app, domínio nem conta co
 senha. No plano grátis cada chave entrega num endereço só e o limite é 250
 envios por mês — a lista tem 63 presentes, então sobra.
 
-Como cada chave atende um endereço, dois destinatários são duas chaves, e o
-código faz uma requisição para cada. Uma chave com problema não cala a outra:
-só vira erro se todas falharem. `CLAIM_EMAIL_TO` e `CLAIM_EMAIL_FROM` não são
-usados por este provedor — quem define o destino é a própria chave.
+**Quem chama o Web3Forms é o navegador do convidado, não a função.** Isso não é
+escolha de estilo: o Web3Forms fica atrás do Cloudflare, que responde com um
+desafio de JavaScript quando a chamada vem de um data center. Do navegador é o
+uso para o qual ele foi feito — e é por isso que a chave deles é pública por
+definição.
 
-### 2. SMTP direto — não precisa de domínio nem de cadastro
+A chave sai de `WEB3FORMS_KEYS` e chega no navegador por `GET /api/config`. Ela
+não é escrita em `src/` de propósito: o site é estático e não tem build, então
+um valor no arquivo estaria no repositório público, onde robô de spam encontra
+e queima a cota.
+
+Como cada chave atende um endereço, dois destinatários são duas chaves, e o
+navegador dispara uma requisição para cada. O envio é sem `await` e com o erro
+engolido: se o Web3Forms estiver fora do ar, ou uma extensão bloquear a
+chamada, o convidado não pode nem perceber — a escolha dele já está gravada no
+Supabase, que é o registro que vale.
+
+`CLAIM_EMAIL_TO` e `CLAIM_EMAIL_FROM` não participam: a chave já define o
+destinatário.
+
+### 2. SMTP direto### 2. SMTP direto — não precisa de domínio nem de cadastro
 
 | Variável | O que é |
 |---|---|
