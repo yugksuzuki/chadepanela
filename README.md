@@ -230,6 +230,28 @@ texto puro num repositório público vira alvo de robô de spam.
 node scripts/testa-avisos.mjs
 ```
 
+## Quando a rede do convidado falha
+
+O `POST /api/claims` tenta uma segunda vez antes de desistir, porque falha de
+rede no meio da festa é esperada — celular no 4G, wi-fi lotado, o site sendo
+republicado na hora do clique. Só o fetch lançando conta como falha de rede;
+resposta de erro do servidor passa direto e é tratada como erro de verdade.
+
+Quando as duas tentativas caem, o convidado lê "Não conseguimos falar com o
+site. Confira sua internet e tente de novo." em vez do `Failed to fetch` do
+navegador, e o botão volta a funcionar em vez de ficar travado.
+
+```bash
+cd src && python3 -m http.server 4180 &
+mkdir -p /tmp/pw && cd /tmp/pw && npm init -y && npm i playwright-core
+NODE_PATH=/tmp/pw/node_modules node scripts/testa-rede.mjs
+```
+
+Derruba o `/api/claims` de propósito num navegador de verdade e confere as três
+coisas que importam: uma queda só é reparada sem o convidado ver nada; a rede
+fora avisa em português e deixa tentar de novo; e um "Desmarcar" que falha não
+trava o botão nem finge que deu certo.
+
 Escolhe o provedor certo, monta o corpo, monta a linha da planilha e garante
 que falha de aviso não derruba a escolha — tudo com dublês, sem mandar e-mail
 nem escrever em planilha nenhuma.
