@@ -161,6 +161,24 @@ primeiros envios.
 Sem domínio verificado, o Resend só entrega no e-mail dono da conta. Se um dia
 houver um domínio, é a opção mais limpa.
 
+## Liberar um presente que travou: `?casal`
+
+O botão "Desmarcar" só aparece para quem marcou, porque é o navegador dele que
+lembra disso. Consequência: um presente marcado sem querer por alguém que
+depois limpou o navegador ficaria preso para sempre.
+
+Abrir o site com `?casal` na URL mostra "Desmarcar" em todo presente já
+escolhido:
+
+```
+https://cha-de-panela-paloma-guilherme.vercel.app/?casal
+```
+
+Não é senha nem proteção — a API nunca teve autenticação, por escolha (é lista
+de família, não loja). É só o botão deixando de ficar escondido. O endereço de
+entrega continua sem aparecer nesse modo: o casal não está comprando, está
+arrumando a lista.
+
 ## Supabase: o registro de quem escolheu o quê
 
 Cada presente marcado ou desmarcado vira uma linha na tabela `public.escolhas`

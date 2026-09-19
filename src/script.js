@@ -18,6 +18,14 @@
   // Do navegador é o uso para o qual ele foi feito — e é por isso que a chave
   // deles é pública por definição.
   let chavesDeAviso = [];
+
+  // Abrir o site com ?casal na URL mostra "Desmarcar" em todo presente já
+  // escolhido, não só nos deste navegador. Sem isso, um presente marcado sem
+  // querer por quem depois limpou o navegador ficaria preso para sempre —
+  // nem o casal conseguiria liberar. Não é senha nem proteção: a API nunca
+  // teve autenticação, por escolha (é lista de família, não loja). É só o
+  // botão deixando de ficar escondido.
+  const MODO_CASAL = new URLSearchParams(window.location.search).has("casal");
   let claims = {};
 
   /* ---------- preço ---------- */
@@ -339,9 +347,12 @@
 
       if (mine) {
         // Quem acabou de escolher precisa do endereço agora, não depois de
-        // procurar no rodapé.
+        // procurar no rodapé. No modo casal isso não vale: eles não estão
+        // comprando, estão arrumando a lista.
         claimArea.appendChild(blocoEntregaDoCard());
+      }
 
+      if (mine || MODO_CASAL) {
         const undoBtn = document.createElement("button");
         undoBtn.className = "claim-undo";
         undoBtn.textContent = "Desmarcar";
