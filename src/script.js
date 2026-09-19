@@ -383,7 +383,7 @@
     } else {
       const claimBtn = document.createElement("button");
       claimBtn.className = "claim-btn";
-      claimBtn.textContent = "Marcar como escolhido";
+      claimBtn.textContent = "Vou dar este presente";
       claimBtn.addEventListener("click", async () => {
         const guestName = window.prompt(
           "Seu nome, para avisarmos quem já escolheu este presente:"

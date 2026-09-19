@@ -463,6 +463,27 @@ main {
 
 .claim-undo:disabled { opacity: 0.6; cursor: default; }
 
+/* ---------- Como funciona ---------- */
+
+/* Fica entre o hero e a lista de propósito: é lido antes de o convidado
+   começar a escolher, que é quando a instrução ainda serve para alguma
+   coisa. */
+.como-funciona {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px 20px 4px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.como-funciona strong {
+  font-weight: 600;
+  color: var(--olive-deep);
+}
+
 /* ---------- Filtros de preço ---------- */
 
 .filtros {
@@ -753,6 +774,7 @@ main {
 }
 
 @media (max-width: 480px) {
+  .como-funciona { padding: 16px 18px 2px; font-size: 13px; }
   .entrega { padding: 36px 18px; }
   .entrega-endereco { font-size: 16px; }
   .filtros { padding: 14px 16px 0; gap: 6px 12px; }
