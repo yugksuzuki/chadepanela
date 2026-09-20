@@ -71,7 +71,8 @@ async function abre(aoReceberPost, opcoes = {}) {
     const acao = await aoReceberPost(posts, corpo);
     if (acao === "cai") return route.abort("connectionfailed");
     if (corpo.action === "unclaim") delete estado[corpo.itemId];
-    else estado[corpo.itemId] = { name: corpo.name, claimedAt: new Date().toISOString() };
+    // como a API de verdade: a resposta diz que tem dono, não quem é
+    else estado[corpo.itemId] = { claimedAt: new Date().toISOString() };
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(estado) });
   });
   await p.goto(URL + (opcoes.query || ""), { waitUntil: "networkidle" });
@@ -165,11 +166,13 @@ async function abre(aoReceberPost, opcoes = {}) {
 
   confere("marcar dispara um aviso", avisos.length, 1);
   confere("aviso: manda a chave vinda de /api/config", avisos[0]?.access_key, "chave-de-teste");
-  confere("aviso: assunto diz quem escolheu o quê",
-    /^Tia Cida escolheu: .+/.test(avisos[0]?.subject || ""), true);
+  confere("aviso: assunto diz qual presente saiu",
+    /^Presente escolhido: .+/.test(avisos[0]?.subject || ""), true);
   confere("aviso: campos legíveis no corpo",
     [avisos[0]?.Convidado, avisos[0]?.["O que aconteceu"], avisos[0]?.["Total escolhidos"]],
-    ["Tia Cida", "Escolhido", "1"]);
+    ["surpresa", "Escolhido", "1"]);
+  confere("aviso: o nome do convidado não vai junto",
+    JSON.stringify(avisos[0]).includes("Tia Cida"), false);
 
   await p.locator("button.claim-undo").first().click();
   await p.waitForTimeout(2000);
@@ -237,7 +240,7 @@ async function abre(aoReceberPost, opcoes = {}) {
       r.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ mixer: { name: "Tia Cida", claimedAt: new Date().toISOString() } }),
+        body: JSON.stringify({ mixer: { claimedAt: new Date().toISOString() } }),
       }));
     await p.goto(URL + query, { waitUntil: "networkidle" });
     await p.waitForTimeout(1200);
@@ -251,6 +254,8 @@ async function abre(aoReceberPost, opcoes = {}) {
     await normal.p.locator("button.claim-undo").count(), 0);
   confere("e o endereço não aparece no card dos outros",
     await normal.p.locator(".card-entrega").count(), 0);
+  confere("o card diz que tem dono, sem dizer quem",
+    (await normal.p.locator(".claim-badge").first().textContent()).trim(), "Já escolhido");
   await normal.ctx.close();
 
   const casal = await comClaimAlheio("?casal");
@@ -258,8 +263,8 @@ async function abre(aoReceberPost, opcoes = {}) {
     await casal.p.locator("button.claim-undo").count(), 1);
   confere("modo casal não mostra o endereço de entrega",
     await casal.p.locator(".card-entrega").count(), 0);
-  confere("modo casal preserva o nome de quem escolheu",
-    /Já escolhido por Tia Cida/.test(await casal.p.locator(".claim-badge").first().textContent()), true);
+  confere("nem no modo casal o nome aparece",
+    (await casal.p.locator(".claim-badge").first().textContent()).trim(), "Já escolhido");
   await casal.ctx.close();
 }
 

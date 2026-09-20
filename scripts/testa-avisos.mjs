@@ -28,10 +28,18 @@ function confere(nome, obtido, esperado) {
 let smtpEnviado = null;
 const cargaOriginal = Module._load;
 let blobGravado = null;
+// Por padrão cada teste começa com a lista vazia. O teste de presente
+// repetido liga isto para que o segundo convidado encontre o que o primeiro
+// gravou, que é a situação real.
+let blobLembra = false;
 Module._load = function (pedido, ...resto) {
   if (pedido === "@vercel/blob") {
     return {
-      list: async () => ({ blobs: [] }),
+      list: async () => ({
+        blobs: blobLembra && blobGravado
+          ? [{ pathname: "claims.json", url: "https://exemplo/claims.json" }]
+          : [],
+      }),
       put: async (caminho, conteudo) => {
         blobGravado = JSON.parse(conteudo);
         return { url: "https://exemplo/claims.json" };
@@ -280,7 +288,89 @@ await claims({ method: "POST", body: { itemId: "batedeira", name: "Tia Cida", it
 console.error = erroConsole;
 
 confere("presente gravado com e-mail, planilha E Supabase falhando", respostas[0].codigo, 200);
-confere("e ele aparece como escolhido", respostas[0].corpo.batedeira.name, "Tia Cida");
+confere("e ele aparece como escolhido", Object.keys(respostas[0].corpo), ["batedeira"]);
+
+/* ---------- surpresa: quem escolheu nunca volta para o navegador ---------- */
+
+// O casal pediu para não saber quem deu o quê: adivinhar na festa é uma das
+// brincadeiras. Esconder o nome só no card não resolveria nada, porque a
+// lista inteira chega ao navegador — bastaria abrir o F12. Quem não pode
+// mandar o nome é a API.
+
+confere("a resposta do claim diz a data, e só isso",
+  Object.keys(respostas[0].corpo.batedeira), ["claimedAt"]);
+confere("o nome não aparece em canto nenhum da resposta",
+  JSON.stringify(respostas[0].corpo).includes("Tia Cida"), false);
+confere("mas continua gravado, para descobrirem depois da festa",
+  blobGravado.batedeira.name, "Tia Cida");
+
+// semNomes é por onde passam GET, POST e o 409 de item já escolhido
+confere("semNomes tira o nome e preserva a data",
+  claims.semNomes({ mixer: { name: "Tia Cida", claimedAt: "2026-09-20T01:00:00.000Z" } }),
+  { mixer: { claimedAt: "2026-09-20T01:00:00.000Z" } });
+
+// e o e-mail que chega para o casal também não pode entregar o convidado
+limpaAmbiente();
+process.env.SMTP_USER = "casa@gmail.com";
+process.env.SMTP_PASS = "senha-de-app";
+process.env.CLAIM_EMAIL_TO = "casa@gmail.com";
+blobGravado = null;
+const resEmail = {
+  setHeader() {},
+  status(codigo) { this._codigo = codigo; return this; },
+  json() { return this; },
+};
+await claims({ method: "POST", body: { itemId: "mixer", name: "Tio Bento", itemName: "Mixer" } }, resEmail);
+
+confere("o e-mail avisa qual presente saiu",
+  smtpEnviado.msg.subject, "Presente escolhido: Mixer");
+confere("e não conta quem escolheu",
+  [smtpEnviado.msg.subject, smtpEnviado.msg.text, smtpEnviado.msg.html]
+    .some((t) => String(t).includes("Tio Bento")), false);
+
+/* ---------- dois convidados, o mesmo presente ---------- */
+
+// A regra que sustenta a lista inteira: se dois clicarem no mesmo item, o
+// segundo tem que esbarrar, senão o casal ganha dois liquidificadores.
+
+limpaAmbiente();
+blobGravado = null;
+blobLembra = true;
+globalThis.fetch = async (url) =>
+  String(url) === "https://exemplo/claims.json"
+    ? { ok: true, status: 200, json: async () => blobGravado }
+    : { ok: true, status: 201, text: async () => "" };
+
+function coletor() {
+  const saida = [];
+  return {
+    saida,
+    setHeader() {},
+    status(codigo) { this._codigo = codigo; return this; },
+    json(corpo) { saida.push({ codigo: this._codigo, corpo }); return this; },
+  };
+}
+
+const primeiro = coletor();
+await claims({ method: "POST", body: { itemId: "liquidificador", name: "Tia Cida", itemName: "Liquidificador" } }, primeiro);
+confere("o primeiro convidado consegue", primeiro.saida[0].codigo, 200);
+
+const segundo = coletor();
+await claims({ method: "POST", body: { itemId: "liquidificador", name: "Tio Bento", itemName: "Liquidificador" } }, segundo);
+confere("o segundo esbarra no bloqueio", segundo.saida[0].codigo, 409);
+confere("e ouve o motivo em português",
+  segundo.saida[0].corpo.error, "Este item já foi escolhido");
+confere("o bloqueio não entrega quem pegou antes",
+  JSON.stringify(segundo.saida[0].corpo).includes("Tia Cida"), false);
+confere("e a escolha do primeiro continua de pé",
+  blobGravado.liquidificador.name, "Tia Cida");
+
+const liberado = coletor();
+await claims({ method: "POST", body: { itemId: "liquidificador", itemName: "Liquidificador", action: "unclaim" } }, liberado);
+confere("desmarcado, o presente volta para a lista",
+  Object.keys(blobGravado), []);
+
+blobLembra = false;
 
 globalThis.fetch = fetchOriginal;
 Module._load = cargaOriginal;

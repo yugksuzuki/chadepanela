@@ -33,7 +33,7 @@ const ITEMS = [
   { id: "ralador-inox", name: "Ralador inox", category: "Utensílios de cozinha", image: "assets/products/ralador-inox.webp", price: 19.90, precoEm: "2026-09-17", links: [{ label: "Ver produto", url: "https://meli.la/1f4dShW" }] },
   { id: "peneiras", name: "Peneiras", category: "Utensílios de cozinha", image: "assets/products/peneiras.webp", price: 19.00, precoEm: "2026-09-17", links: [{ label: "Ver produto", url: "https://meli.la/1uqdTQU" }] },
   { id: "medidor", name: "Medidor", category: "Utensílios de cozinha", image: "assets/products/medidor.webp", links: [{ label: "Ver produto", url: "https://s.shopee.com.br/W6fosNdQP" }] },
-  { id: "cortador-de-pizza", name: "Cortador de pizza", category: "Utensílios de cozinha", image: "assets/products/cortador-de-pizza.webp", price: 280.24, precoEm: "2026-09-17", links: [{ label: "Ver produto", url: "https://meli.la/1LuRvka" }] },
+  { id: "cortador-de-pizza", name: "Cortador de pizza", category: "Utensílios de cozinha", image: "assets/products/cortador-de-pizza.webp", price: 45.90, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/1LuRvka" }] },
   { id: "faca-de-bolo-e-espatula", name: "Faca de bolo e espátula", category: "Utensílios de cozinha", image: "assets/products/faca-de-bolo-e-espatula.webp", price: 24.00, precoEm: "2026-09-17", links: [{ label: "Ver produto", url: "https://meli.la/1z9PEGf" }] },
   { id: "pano-de-prato", name: "Pano de prato", category: "Utensílios de cozinha", image: "assets/products/pano-de-prato.jpg", links: [{ label: "Ver produto", url: "https://s.shopee.com.br/AAHF93i18f" }] },
 

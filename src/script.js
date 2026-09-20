@@ -203,10 +203,12 @@
           access_key: chave,
           subject:
             evento.acao === "Escolhido"
-              ? `${evento.convidado} escolheu: ${evento.presente}`
+              ? `Presente escolhido: ${evento.presente}`
               : `${evento.presente} voltou para a lista`,
           Presente: evento.presente,
-          Convidado: evento.convidado || "—",
+          // O nome não entra: este e-mail vai para o casal, e quem deu o quê
+          // é surpresa. Ele fica só no Supabase, para depois da festa.
+          Convidado: "surpresa",
           "O que aconteceu": evento.acao,
           "Total escolhidos": String(evento.total),
           Quando: new Date().toLocaleString("pt-BR"),
@@ -341,9 +343,11 @@
       const badge = document.createElement("span");
       badge.className = "claim-badge";
       const badgeText = document.createElement("span");
+      // Sem nome de propósito: quem deu o quê é surpresa até a festa. O que
+      // importa aqui é o presente aparecer como tomado, para ninguém repetir.
       badgeText.textContent = mine
         ? "Você escolheu este presente"
-        : `Já escolhido por ${claim.name}`;
+        : "Já escolhido";
       badge.appendChild(badgeText);
       badge.appendChild(heartIcon());
       claimArea.appendChild(badge);
@@ -366,7 +370,6 @@
             avisaOCasal({
               acao: "Desmarcado",
               presente: item.name,
-              convidado: "",
               total: Object.keys(claims).length - 1,
             });
           } catch (e) {
@@ -389,7 +392,8 @@
       claimBtn.textContent = "Vou dar este presente";
       claimBtn.addEventListener("click", async () => {
         const guestName = window.prompt(
-          "Seu nome, para avisarmos quem já escolheu este presente:"
+          "Seu nome (fica em segredo — no site aparece só que o presente já " +
+            "foi escolhido, e os noivos vão adivinhar na festa):"
         );
         if (guestName === null) return;
         if (!guestName.trim()) {
@@ -404,7 +408,6 @@
           avisaOCasal({
             acao: "Escolhido",
             presente: item.name,
-            convidado: guestName.trim(),
             total: Object.keys(claims).length,
           });
           rememberMyClaim(item.id);

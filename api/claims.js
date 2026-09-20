@@ -23,6 +23,24 @@ async function writeClaims(claims) {
   });
 }
 
+/**
+ * A lista que vai para o navegador não leva o nome de quem escolheu.
+ *
+ * Isso não é enfeite de interface. Esconder o nome só no card deixaria ele a
+ * um F12 de distância, e o casal pediu para não saber: adivinhar quem deu o
+ * quê é uma das brincadeiras da festa. O que o convidado precisa ver é que o
+ * presente já tem dono — e isso continua aparecendo.
+ *
+ * O nome segue gravado no blob e no Supabase, para depois da festa.
+ */
+function semNomes(claims) {
+  const publico = {};
+  for (const [itemId, dados] of Object.entries(claims)) {
+    publico[itemId] = { claimedAt: dados.claimedAt };
+  }
+  return publico;
+}
+
 /* ---------- aviso por e-mail ---------- */
 
 function escapaHtml(texto) {
@@ -66,7 +84,7 @@ function separaRemetente(bruto) {
  *
  * Devolve uma descrição do que aconteceu; nunca lança.
  */
-async function enviaEmail({ assunto, html, texto, campos }) {
+async function enviaEmail({ assunto, html, texto }) {
   const de = process.env.CLAIM_EMAIL_FROM || process.env.SMTP_USER || "";
 
   const para = destinatarios();
@@ -208,29 +226,23 @@ async function avisaPorEmail({ acao, itemId, itemName, guestName, total }) {
   const escolheu = acao === "claim";
 
   const assunto = escolheu
-    ? `${guestName} escolheu: ${presente}`
+    ? `Presente escolhido: ${presente}`
     : `${presente} voltou para a lista`;
 
   const quando = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
   const linha = escolheu
-    ? `${guestName} escolheu ${presente}.`
+    ? `Alguém escolheu ${presente}. Quem foi fica para vocês descobrirem na festa.`
     : `${presente} foi desmarcado e está disponível de novo.`;
 
   const corpo = escolheu
-    ? `<p><strong>${escapaHtml(guestName)}</strong> escolheu <strong>${escapaHtml(presente)}</strong>.</p>`
+    ? `<p>Alguém escolheu <strong>${escapaHtml(presente)}</strong>.<br>` +
+      `<em>Quem foi fica para vocês descobrirem na festa.</em></p>`
     : `<p><strong>${escapaHtml(presente)}</strong> foi desmarcado e está disponível de novo.</p>`;
 
   try {
     const resultado = await enviaEmail({
       assunto,
-      campos: {
-        acao: escolheu ? "Escolhido" : "Desmarcado",
-        presente,
-        convidado: guestName || "",
-        total,
-        quando,
-      },
       html:
         corpo +
         `<p style="color:#5c5c42">${escapaHtml(String(total))} presente(s) escolhido(s) até agora.<br>` +
@@ -273,7 +285,7 @@ module.exports = async (req, res) => {
   if (req.method === "GET") {
     const claims = await readClaims();
     res.setHeader("Cache-Control", "no-store");
-    return res.status(200).json(claims);
+    return res.status(200).json(semNomes(claims));
   }
 
   if (req.method === "POST") {
@@ -297,12 +309,14 @@ module.exports = async (req, res) => {
         total: Object.keys(claims).length,
       });
       res.setHeader("Cache-Control", "no-store");
-      return res.status(200).json(claims);
+      return res.status(200).json(semNomes(claims));
     }
 
     if (claims[itemId]) {
       res.setHeader("Cache-Control", "no-store");
-      return res.status(409).json({ error: "Este item já foi escolhido", claims });
+      return res
+        .status(409)
+        .json({ error: "Este item já foi escolhido", claims: semNomes(claims) });
     }
 
     if (!name || typeof name !== "string" || !name.trim()) {
@@ -326,7 +340,7 @@ module.exports = async (req, res) => {
     });
 
     res.setHeader("Cache-Control", "no-store");
-    return res.status(200).json(claims);
+    return res.status(200).json(semNomes(claims));
   }
 
   res.setHeader("Allow", "GET, POST");
@@ -339,3 +353,4 @@ module.exports.notificaPlanilha = notificaPlanilha;
 module.exports.registraNoSupabase = registraNoSupabase;
 module.exports.separaRemetente = separaRemetente;
 module.exports.destinatarios = destinatarios;
+module.exports.semNomes = semNomes;

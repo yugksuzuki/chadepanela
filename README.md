@@ -79,11 +79,50 @@ pelo card e por todos os botões de copiar) e, por o site ser estático e sem
 build, repetido em `src/index.html` nos itens 1 e 3, para que apareça mesmo
 antes do JavaScript rodar. **Trocar o endereço é trocar os três.**
 
+## Quem escolheu é surpresa
+
+Todo mundo vê que um presente já tem dono. **Ninguém vê quem foi — nem o
+casal.** Descobrir quem deu o quê é brincadeira da festa.
+
+Isso não é texto escondido no card. Esconder o nome só na tela deixaria ele a
+um F12 de distância, porque a lista inteira vai para o navegador. Quem não
+manda o nome é a API: `semNomes()`, em `api/claims.js`, é por onde passam o
+`GET`, o `POST` e o 409 de item já escolhido, e o que sai de lá é só
+`{ itemId: { claimedAt } }`.
+
+Os três lugares onde o nome poderia vazar e não vaza:
+
+| Onde | O que aparece |
+|---|---|
+| Card na página | "Já escolhido" — inclusive no modo `?casal` |
+| Resposta da API | só a data da escolha |
+| E-mail para o casal | "Presente escolhido: Batedeira" |
+
+O nome **continua sendo gravado**, no blob e na tabela do Supabase, para o
+casal descobrir depois da festa e agradecer a quem deu o quê. Quem abrir o
+painel do Supabase antes da hora estraga a brincadeira sozinho. Se um dia
+vocês preferirem não guardar nem isso, é tirar `convidado` do evento enviado
+em `avisaPorEmail`.
+
+### Dois convidados, o mesmo presente
+
+O segundo esbarra: o `POST` responde **409** com "Este item já foi escolhido",
+e a resposta traz a lista atualizada para a tela se corrigir na hora. O
+`scripts/testa-avisos.mjs` cobre os dois lados — o primeiro consegue, o
+segundo é barrado, a escolha do primeiro sobrevive, e o 409 não entrega quem
+chegou antes.
+
+Uma ressalva honesta: a gravação é ler-e-escrever num blob, sem transação. Se
+duas pessoas clicarem no mesmo presente dentro da mesma fração de segundo, dá
+para as duas passarem. Numa lista de família o risco é pequeno, e o e-mail
+duplicado avisaria vocês.
+
 ## Aviso por e-mail a cada presente escolhido
 
 Quando alguém marca (ou desmarca) um presente, `api/claims.js` manda um e-mail
-avisando quem escolheu o quê. O provedor é escolhido pela variável que estiver
-configurada, nesta ordem — basta configurar **um** deles.
+avisando **qual** presente saiu da lista — nunca quem escolheu (ver a seção
+acima). O provedor é escolhido pela variável que estiver configurada, nesta
+ordem — basta configurar **um** deles.
 
 Todas as variáveis vão em Vercel → Settings → Environment Variables, no
 ambiente Production. Depois de salvar, é preciso um novo deploy para a função
