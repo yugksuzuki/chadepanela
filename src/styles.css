@@ -484,6 +484,59 @@ main {
   color: var(--olive-deep);
 }
 
+/* ---------- Aviso de entrega no topo ---------- */
+
+/* O endereço também mora no rodapé, mas lá embaixo só é visto por quem rola
+   até o fim — e quem vai comprar pela internet precisa dele antes disso. */
+.topo-entrega {
+  max-width: 600px;
+  margin: 14px auto 0;
+  padding: 14px 18px;
+  background: var(--mat);
+  border: 1px solid var(--claimed-border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.topo-entrega-rotulo {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.topo-entrega .entrega-endereco {
+  font-size: 15px;
+  margin: 0;
+  color: var(--olive-deep);
+}
+
+.topo-entrega-copiar {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 2px;
+  border: 1px solid var(--claimed-border);
+  background: transparent;
+  color: var(--olive-deep);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 18px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.topo-entrega-copiar:hover { background: var(--sage-soft); }
+
+.topo-entrega-copiar:focus-visible {
+  outline: 2px solid var(--olive-deep);
+  outline-offset: 2px;
+}
+
 /* ---------- Filtros de preço ---------- */
 
 .filtros {
@@ -631,8 +684,11 @@ main {
   font-weight: 600;
   line-height: 1.55;
   margin: 0 0 18px;
-  color: var(--cream);
 }
+
+/* A cor fica aqui, e não na regra acima, porque o mesmo endereço aparece
+   também no aviso do topo, sobre fundo claro. */
+.entrega .entrega-endereco { color: var(--cream); }
 
 .entrega-copiar {
   display: inline-flex;

@@ -66,13 +66,18 @@ npx serve src
 
 ## Endereço de entrega
 
-O endereço fica em `ENDERECO_ENTREGA`, no topo de `src/script.js`, e aparece em
-dois lugares: na seção "Onde enviar o presente" antes do rodapé, e dentro do
-card assim que o convidado marca o presente como escolhido — que é a hora em
-que ele precisa do endereço. Os dois têm botão de copiar, com seleção de texto
-como plano B onde a área de transferência não está disponível.
+O endereço aparece em três lugares, todos com botão de copiar (e seleção do
+texto como plano B, onde a área de transferência não está disponível):
 
-Trocar o endereço é trocar essa constante; nada mais depende dela.
+1. **No aviso do topo**, antes da lista — para quem vai comprar pela internet e
+   precisa do endereço *antes* de fechar o pedido, não depois.
+2. **Dentro do card**, assim que o convidado marca o presente como escolhido.
+3. **Na seção "Onde enviar o presente"**, antes do rodapé.
+
+O texto está escrito em `ENDERECO_ENTREGA`, no topo de `src/script.js` (usado
+pelo card e por todos os botões de copiar) e, por o site ser estático e sem
+build, repetido em `src/index.html` nos itens 1 e 3, para que apareça mesmo
+antes do JavaScript rodar. **Trocar o endereço é trocar os três.**
 
 ## Aviso por e-mail a cada presente escolhido
 
