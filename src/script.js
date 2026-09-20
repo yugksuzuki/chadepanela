@@ -43,7 +43,8 @@
   const FAIXAS = [
     { id: "todas", label: "Qualquer preço", testa: () => true },
     { id: "ate-50", label: "Até R$ 50", testa: (p) => p !== null && p <= 50 },
-    { id: "50-150", label: "R$ 50 a 150", testa: (p) => p !== null && p > 50 && p <= 150 },
+    { id: "50-100", label: "R$ 50 a 100", testa: (p) => p !== null && p > 50 && p <= 100 },
+    { id: "100-150", label: "R$ 100 a 150", testa: (p) => p !== null && p > 100 && p <= 150 },
     { id: "150-300", label: "R$ 150 a 300", testa: (p) => p !== null && p > 150 && p <= 300 },
     { id: "acima-300", label: "Acima de R$ 300", testa: (p) => p !== null && p > 300 },
     { id: "sem-preco", label: "Sem preço", testa: (p) => p === null },
