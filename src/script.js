@@ -54,9 +54,17 @@
     return typeof item.price === "number" ? item.price : null;
   }
 
-  function precoMaisRecente() {
+  /**
+   * A data mais antiga e a mais nova entre as consultas de preço.
+   *
+   * Antes aqui só saía a mais nova, e isso mentia para o convidado: bastava
+   * um preço corrigido hoje para a página anunciar que todos foram
+   * consultados hoje, quando a maioria era de dias antes.
+   */
+  function intervaloDeConsulta() {
     const datas = ITEMS.map((i) => i.precoEm).filter(Boolean).sort();
-    return datas.length ? datas[datas.length - 1] : null;
+    if (!datas.length) return null;
+    return { de: datas[0], ate: datas[datas.length - 1] };
   }
 
   function dataCurta(iso) {
@@ -606,11 +614,15 @@
     grupoEsconder.appendChild(check);
     filtros.appendChild(grupoEsconder);
 
-    const em = precoMaisRecente();
-    if (em) {
+    const quando = intervaloDeConsulta();
+    if (quando) {
       const nota = document.createElement("p");
       nota.className = "filtro-nota";
-      nota.textContent = `Preços consultados em ${dataCurta(em)} — podem ter mudado desde então.`;
+      nota.textContent =
+        (quando.de === quando.ate
+          ? `Preços consultados em ${dataCurta(quando.de)}`
+          : `Preços consultados entre ${dataCurta(quando.de)} e ${dataCurta(quando.ate)}`) +
+        " — podem ter mudado desde então.";
       filtros.appendChild(nota);
     }
   }

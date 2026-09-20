@@ -40,6 +40,11 @@ const DRY = temFlag("--dry");
 const SO_ITEM = valorFlag("--item");
 const PAUSA_MS = Number(valorFlag("--pausa") || 1200);
 
+// Acima disso o preço novo vira item de conferência, em vez de passar calado.
+// 20% cobre promoção normal sem esconder as trocas grosseiras: a forma de
+// pizza estava 80% acima e o cortador 84%.
+const LIMITE_VARIACAO = Number(valorFlag("--limite") || 0.2);
+
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -216,6 +221,7 @@ async function main() {
 
   const avisos = [];
   const falhas = [];
+  const mudancas = [];
   const porHash = new Map();
   let comPreco = 0;
   let comFoto = 0;
@@ -238,11 +244,29 @@ async function main() {
 
       if (!SO_FOTOS) {
         const preco = acharPreco(html);
+        const antes = item.price;
         if (preco && preco > 0) {
           item.price = preco;
           item.precoEm = HOJE;
           comPreco++;
           saida.push(`R$ ${preco.toFixed(2).replace(".", ",")}`);
+
+          // O preço antigo some assim que este arquivo é reescrito, e com ele
+          // some a chance de notar que o robô leu a página errada. Foi assim
+          // que a forma de pizza ficou 80% acima do preço real por dias: o
+          // número novo aparecia sozinho na tela e parecia plausível.
+          if (typeof antes === "number" && antes > 0) {
+            const variacao = (preco - antes) / antes;
+            if (Math.abs(variacao) >= LIMITE_VARIACAO) {
+              const sinal = variacao > 0 ? "+" : "";
+              saida.push(`era R$ ${antes.toFixed(2).replace(".", ",")}`);
+              mudancas.push(
+                `MUDOU    ${item.id}: R$ ${antes.toFixed(2).replace(".", ",")} → ` +
+                  `R$ ${preco.toFixed(2).replace(".", ",")} ` +
+                  `(${sinal}${(variacao * 100).toFixed(0)}%) — ${url}`
+              );
+            }
+          }
         } else {
           saida.push("preço não encontrado");
         }
@@ -291,6 +315,19 @@ async function main() {
   if (avisos.length || falhas.length) {
     console.log("\nO que precisa de olho humano:\n");
     for (const l of [...avisos, ...falhas]) console.log("  " + l);
+  }
+
+  if (mudancas.length) {
+    console.log(
+      `\n${mudancas.length} preço(s) mudaram mais de ${(LIMITE_VARIACAO * 100).toFixed(0)}%. ` +
+        `Abra estes links e confira — pode ser promoção, pode ser anúncio errado:\n`
+    );
+    for (const l of mudancas) console.log("  " + l);
+  } else if (!SO_FOTOS && comPreco > 0) {
+    console.log(
+      `\nNenhum preço variou mais de ${(LIMITE_VARIACAO * 100).toFixed(0)}%: ` +
+        `os que já estavam no arquivo batem com os anúncios.`
+    );
   }
 
   if (semFoto.length) {

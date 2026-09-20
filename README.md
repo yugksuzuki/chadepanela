@@ -39,6 +39,25 @@ node scripts/atualiza-catalogo.mjs --item ferro-de-passar
 node scripts/atualiza-catalogo.mjs --dry                # só mostra o que faria
 ```
 
+### Como ter certeza de que nenhum preço está errado
+
+Rode o robô de novo e leia o relatório. Ele compara o preço que já está no
+arquivo com o que encontrar no anúncio e, quando a diferença passa de 20%,
+imprime a linha `MUDOU` com o valor antigo, o novo, o percentual e o link —
+para você abrir só esses, em vez dos 59.
+
+Quando nada destoa, ele diz isso em uma linha: *"Nenhum preço variou mais de
+20%: os que já estavam no arquivo batem com os anúncios."* **Essa frase é a
+garantia.** Sem ela, algum preço merece um olhar.
+
+Esse aviso existe porque a falta dele custou caro: o robô sobrescrevia o preço
+e mostrava só o número novo, que parecia plausível sozinho. A forma de pizza
+ficou dias marcada a R$ 151,47 valendo R$ 29,96, e o cortador de pizza a
+R$ 280,24 valendo R$ 45,90 — 80% e 84% de erro, invisíveis na tela.
+
+O limite pode mudar com `--limite` (0.2 é o padrão; `--limite 0.05` pega
+qualquer variação acima de 5%).
+
 No fim ele lista o que precisa de olho humano:
 
 - **ATENÇÃO** — o título do anúncio não bate com o nome do presente. Quase
