@@ -4,12 +4,31 @@ const CLAIMS_PATH = "claims.json";
 const MAX_NAME_LENGTH = 60;
 const MAX_ITEM_NAME_LENGTH = 120;
 
+/**
+ * Lê a lista de escolhidos — sem receber uma cópia velha.
+ *
+ * O blob é público, servido por CDN, e o put grava sempre no mesmo caminho.
+ * `cache: "no-store"` não resolve isso: esse cabeçalho fala com o cache do
+ * próprio fetch, não com a borda, que seguia entregando a versão anterior.
+ *
+ * O efeito apareceu na festa. Uma escolha gravada às 15:57 ainda não
+ * constava na leitura das 15:58, e a gravação seguinte — feita em cima
+ * dessa leitura velha — apagou quem tinha vindo antes. Foi assim que a
+ * "Forma de pizza" sumiu, e antes dela a "Chaleira elétrica", que a
+ * convidada precisou marcar duas vezes.
+ *
+ * Duas defesas: o writeClaims abaixo manda a CDN não guardar nada, e aqui a
+ * URL ganha um sufixo único, que não casa com entrada de cache nenhuma.
+ */
 async function readClaims() {
   const { blobs } = await list({ prefix: CLAIMS_PATH, limit: 1 });
   const found = blobs.find((b) => b.pathname === CLAIMS_PATH);
   if (!found) return {};
 
-  const response = await fetch(found.url, { cache: "no-store" });
+  const separador = found.url.includes("?") ? "&" : "?";
+  const url = `${found.url}${separador}v=${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) return {};
   return response.json();
 }
@@ -20,7 +39,49 @@ async function writeClaims(claims) {
     contentType: "application/json",
     addRandomSuffix: false,
     allowOverwrite: true,
+    // Esta lista muda a cada clique e é lida no clique seguinte. Guardá-la na
+    // borda, ainda que por pouco tempo, é o que fazia as escolhas sumirem.
+    cacheControlMaxAge: 0,
   });
+}
+
+/**
+ * Grava e confere que nada se perdeu no caminho.
+ *
+ * Mesmo lendo sempre a versão atual, duas pessoas que clicam quase juntas
+ * podem ler a mesma lista antes de qualquer uma gravar — e aí a segunda
+ * gravação apaga a primeira. A janela encolheu de um minuto para o tempo de
+ * uma ida ao blob, mas não sumiu, e aconteceu neste dia: a sanduicheira
+ * entrou duas vezes com seis microssegundos de diferença.
+ *
+ * Então, logo depois de gravar, lê de novo. O que gravamos e não está mais
+ * lá foi atropelado por outra requisição: junta e grava outra vez. E o que
+ * mandamos remover não pode voltar nesse meio-tempo.
+ */
+async function gravaEConfere(novas, removido) {
+  await writeClaims(novas);
+
+  const agora = await readClaims();
+  const corrigida = { ...agora };
+  let precisaRegravar = false;
+
+  for (const [itemId, dados] of Object.entries(novas)) {
+    if (!corrigida[itemId]) {
+      corrigida[itemId] = dados;
+      precisaRegravar = true;
+    }
+  }
+
+  if (removido && corrigida[removido]) {
+    delete corrigida[removido];
+    precisaRegravar = true;
+  }
+
+  if (precisaRegravar) {
+    console.warn("[claims] gravação simultânea detectada; lista remendada");
+    await writeClaims(corrigida);
+  }
+  return corrigida;
 }
 
 /**
@@ -295,13 +356,13 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "itemId é obrigatório" });
     }
 
-    const claims = await readClaims();
+    let claims = await readClaims();
     const nomeDoPresente =
       typeof itemName === "string" ? itemName.trim().slice(0, MAX_ITEM_NAME_LENGTH) : "";
 
     if (action === "unclaim") {
       delete claims[itemId];
-      await writeClaims(claims);
+      claims = await gravaEConfere(claims, itemId);
       await avisaPorEmail({
         acao: "unclaim",
         itemId,
@@ -330,7 +391,7 @@ module.exports = async (req, res) => {
       claimedAt: new Date().toISOString(),
     };
 
-    await writeClaims(claims);
+    claims = await gravaEConfere(claims, null);
     await avisaPorEmail({
       acao: "claim",
       itemId,
@@ -354,3 +415,4 @@ module.exports.registraNoSupabase = registraNoSupabase;
 module.exports.separaRemetente = separaRemetente;
 module.exports.destinatarios = destinatarios;
 module.exports.semNomes = semNomes;
+module.exports.gravaEConfere = gravaEConfere;

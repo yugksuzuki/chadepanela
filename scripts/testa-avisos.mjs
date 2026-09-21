@@ -336,8 +336,10 @@ confere("e não conta quem escolheu",
 limpaAmbiente();
 blobGravado = null;
 blobLembra = true;
+// startsWith, e não ===: a leitura acrescenta um sufixo único à URL para não
+// receber a cópia guardada na CDN.
 globalThis.fetch = async (url) =>
-  String(url) === "https://exemplo/claims.json"
+  String(url).startsWith("https://exemplo/claims.json")
     ? { ok: true, status: 200, json: async () => blobGravado }
     : { ok: true, status: 201, text: async () => "" };
 
@@ -369,6 +371,63 @@ const liberado = coletor();
 await claims({ method: "POST", body: { itemId: "liquidificador", itemName: "Liquidificador", action: "unclaim" } }, liberado);
 confere("desmarcado, o presente volta para a lista",
   Object.keys(blobGravado), []);
+
+blobLembra = false;
+
+/* ---------- o bug que apagou escolhas na festa ---------- */
+
+// O blob é servido por CDN e gravado sempre no mesmo caminho. Enquanto a
+// leitura aceitava a cópia da borda, uma escolha recém-gravada não aparecia
+// na leitura seguinte, e a gravação depois dela apagava quem veio antes.
+
+limpaAmbiente();
+blobGravado = null;
+blobLembra = true;
+
+const urlsLidas = [];
+globalThis.fetch = async (url) => {
+  const u = String(url);
+  if (u.startsWith("https://exemplo/claims.json")) {
+    urlsLidas.push(u);
+    return { ok: true, status: 200, json: async () => blobGravado };
+  }
+  return { ok: true, status: 201, text: async () => "" };
+};
+
+const umClaim = coletor();
+await claims({ method: "POST", body: { itemId: "chaleira", name: "Tati", itemName: "Chaleira" } }, umClaim);
+
+confere("a leitura do blob não aceita a cópia da CDN",
+  urlsLidas.every((u) => /[?&]v=\d+-/.test(u)), true);
+confere("e cada leitura pede um endereço diferente",
+  new Set(urlsLidas).size, urlsLidas.length);
+
+/* ---------- e o atropelo entre duas gravações ---------- */
+
+// Simula outra requisição gravando por cima no intervalo entre o nosso put e
+// a conferência: a lista volta sem a escolha que acabamos de gravar.
+const antesDoAtropelo = { ...blobGravado };
+let atropelou = false;
+const lerOriginal = globalThis.fetch;
+globalThis.fetch = async (url) => {
+  const u = String(url);
+  if (u.startsWith("https://exemplo/claims.json") && !atropelou && blobGravado && blobGravado.mixer) {
+    atropelou = true;
+    const semOMixer = { ...blobGravado };
+    delete semOMixer.mixer;  // a outra requisição não tinha visto o mixer
+    return { ok: true, status: 200, json: async () => semOMixer };
+  }
+    return lerOriginal(url);
+};
+
+const doisClaim = coletor();
+await claims({ method: "POST", body: { itemId: "mixer", name: "Cris", itemName: "Mixer" } }, doisClaim);
+
+confere("escolha atropelada por outra gravação é remendada",
+  !!blobGravado.mixer, true);
+confere("e a escolha anterior continua de pé",
+  !!blobGravado.chaleira, true);
+confere("a conferência percebeu o atropelo", atropelou, true);
 
 blobLembra = false;
 
