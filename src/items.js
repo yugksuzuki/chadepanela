@@ -29,7 +29,7 @@ const ITEMS = [
   { id: "tabua-grande-de-carne", name: "Tábua grande de carne", category: "Utensílios de cozinha", image: "assets/products/tabua-grande-de-carne.webp", price: 55.00, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/1Y95ipx" }] },
   { id: "escorredor-de-macarrao", name: "Escorredor de macarrão", category: "Utensílios de cozinha", image: "assets/products/escorredor-de-macarrao.webp", price: 24.08, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/2hpmHSQ" }] },
   { id: "abridor-de-latas", name: "Abridor de latas", category: "Utensílios de cozinha", image: "assets/products/abridor-de-latas.webp", price: 34.98, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/1Joqms4" }] },
-  { id: "porta-temperos", name: "Porta temperos", category: "Utensílios de cozinha", image: "assets/products/porta-temperos.jpg", price: 51.90, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://www.amazon.com.br/Porta-Temperos-Giratório-Organizador-Cozinha/dp/B0H95JQNWN" }] },
+    { id: "porta-temperos", name: "Porta temperos", category: "Utensílios de cozinha", image: "assets/products/porta-temperos.jpg", links: [{ label: "Ver produto", url: "https://meli.la/1i2covr" }] },
   { id: "ralador-inox", name: "Ralador inox", category: "Utensílios de cozinha", image: "assets/products/ralador-inox.webp", price: 22.81, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/1f4dShW" }] },
   { id: "peneiras", name: "Peneiras", category: "Utensílios de cozinha", image: "assets/products/peneiras.webp", price: 19.00, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/1uqdTQU" }] },
   { id: "medidor", name: "Medidor", category: "Utensílios de cozinha", image: "assets/products/medidor.webp", price: 49.99, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://s.shopee.com.br/W6fosNdQP" }] },
@@ -78,8 +78,9 @@ const ITEMS = [
 
   { id: "jogo-de-panelas", name: "Jogo de panelas", category: "Panelas", image: "assets/products/jogo-de-panelas.webp", price: 577.04, precoEm: "2026-09-20", links: [{ label: "Opção 1", url: "https://meli.la/2LCpWFQ" }, { label: "Opção 2", url: "https://meli.la/32nfYJd" }] },
 
-  { id: "sofa", name: "Sofá", category: "Itens grandes", image: "assets/products/sofa.svg", links: [] },
+  { id: "sofa", name: "Sofá", category: "Itens grandes", image: "assets/products/sofa.svg", links: [{ label: "Ver produto", url: "https://www.magazineluiza.com.br/sofa-cama-casal-3-lugares-solomons-linho-cru-mobly/p/db1890kh98/mo/sa03/?partner_id=64853&utm_source=pdp_desk&utm_medium=share" }] },
   { id: "mesa-com-cadeiras", name: "Mesa com cadeiras", category: "Itens grandes", image: "assets/products/mesa-com-cadeiras.svg", links: [] },
-  { id: "televisao", name: "Televisão", category: "Itens grandes", image: "assets/products/televisao.svg", links: [] },
-  { id: "maquina-de-lavar-loucas", name: "Máquina de lavar louça", category: "Itens grandes", image: "assets/products/maquina-de-lavar-loucas.svg", links: [] },
+  { id: "televisao", name: "Televisão", category: "Itens grandes", image: "assets/products/televisao.svg", links: [{ label: "Ver produto", url: "https://m.magazineluiza.com.br/smart-tv-55-samsung-4k-uhd-crystal-uhd-un55u8600fgxzd-tizen-bixby-3-hdmi/p/240147500/et/elit/?partner_id=64853&utm_source=pdp_desk&utm_medium=share&seller_id=magazineluiza" }] },
+  { id: "maquina-de-lavar-loucas", name: "Máquina de lavar louça", category: "Itens grandes", image: "assets/products/maquina-de-lavar-loucas.svg", links: [{ label: "Ver produto", url: "https://m.magazineluiza.com.br/lava-loucas-8-servicos-cinza-touch-plus-midea/p/fg288e29fk/ed/l08s/?partner_id=64853&utm_source=pdp_desk&utm_medium=share&seller_id=mideacarrier" }] },
+  { id: "escrivaninha", name: "Escrivaninha", category: "Itens grandes", image: "assets/products/escrivaninha.svg", links: [{ label: "Ver produto", url: "https://meli.la/22GCTj6" }] },
 ];
