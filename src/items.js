@@ -63,7 +63,6 @@ const ITEMS = [
   { id: "assadeiras", name: "Assadeiras", category: "Organização da cozinha", image: "assets/products/assadeiras.webp", price: 45.99, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/17gjWz1" }] },
 
   { id: "organizador-de-lavanderia", name: "Organizador de lavanderia", category: "Casa e lavanderia", image: "assets/products/organizador-de-lavanderia.webp", price: 112.90, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/18rt3Yv" }] },
-  { id: "balde", name: "Balde", category: "Casa e lavanderia", image: "assets/products/balde.webp", price: 71.15, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/24g5etf" }] },
   { id: "cesto-de-limpeza", name: "Cesto de limpeza", category: "Casa e lavanderia", image: "assets/products/cesto-de-limpeza.webp", price: 43.98, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/2xWNttx" }] },
   { id: "cesto-de-roupa-suja", name: "Cesto de roupa suja", category: "Casa e lavanderia", image: "assets/products/cesto-de-roupa-suja.webp", price: 58.90, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/1BSbswb" }] },
   { id: "cabides", name: "Cabides", category: "Casa e lavanderia", image: "assets/products/cabides.webp", price: 66.40, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/1o6Qd5n" }] },
