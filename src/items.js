@@ -12,7 +12,7 @@ const CATEGORIES = [
 ];
 
 const ITEMS = [
-  { id: "aspirador-de-po", name: "Aspirador de pó", category: "Eletroportáteis", image: "assets/products/aspirador-de-po.webp", price: 724.00, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/1PSE1aB" }] },
+  { id: "aspirador-de-po", name: "Aspirador de pó", category: "Eletroportáteis", image: "assets/products/aspirador-de-po.webp", links: [{ label: "Ver produto", url: "https://m.magazineluiza.com.br/aspirador-de-po-vertical-sem-fio-electrolux-ergorapido-2-em-1-cyclone-ate-21-min-branco-erg21/p/bd3e8g7j8e/ep/apdv/?partner_id=64853&utm_source=pdp_desk&utm_medium=share&seller_id=electrolux" }] },
   { id: "torradeira", name: "Torradeira", category: "Eletroportáteis", image: "assets/products/torradeira.webp", price: 159.90, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/28GQC9a" }] },
   { id: "mixer", name: "Mixer", category: "Eletroportáteis", image: "assets/products/mixer.webp", price: 119.90, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://meli.la/1gT47ai" }] },
   { id: "ferro-de-passar", name: "Ferro de passar", category: "Eletroportáteis", image: "assets/products/ferro-de-passar.jpg", price: 83.67, precoEm: "2026-09-20", links: [{ label: "Ver produto", url: "https://www.amazon.com.br/Ferro-Passar-Antiaderente-Oster-GCSTBS5002/dp/B09LNKQYND" }] },
