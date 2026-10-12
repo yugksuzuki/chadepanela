@@ -10,7 +10,7 @@
   const STORAGE_KEY = "cha-de-panela-minhas-escolhas";
 
   const ENDERECO_ENTREGA =
-    "Av. Marechal Floriano Peixoto, 53 - Socomim - Telêmaco Borba/PR";
+    "Rua Delfim Moreira, 451 - ap. 09, 3º andar - Alto das Oliveiras - Telêmaco Borba/PR - CEP 84.245-360";
 
   // Chaves do Web3Forms, buscadas em /api/config. O aviso ao casal sai daqui,
   // do navegador, e não do servidor: o Web3Forms fica atrás do Cloudflare, que
